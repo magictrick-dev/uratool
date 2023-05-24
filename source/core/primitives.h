@@ -1,6 +1,6 @@
 #ifndef URTOOL_PRIMITIVES_H
 #define URTOOL_PRIMITIVES_H
-#include <cstdint.h>
+#include <stdint.h>
 
 typedef uint8_t 	u8;
 typedef uint16_t 	u16;
@@ -17,5 +17,7 @@ typedef double 		r64;
 
 typedef i32 		b32;
 typedef i64 		b64;
+
+typedef i32 		errno;
 
 #endif
