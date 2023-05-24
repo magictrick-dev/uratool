@@ -1,4 +1,4 @@
-## USB Replication Automation Tool : URTool
+## USB Replication Automation Tool : URATool
 
 A USB replication automation tool for replicating USB drives at timed intervals.
 
