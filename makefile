@@ -1,6 +1,6 @@
 
-urtool: ./source/main.c
-	g++ -Wall -o urtool ./source/main.c
+uratool: ./source/main.c
+	g++ -Wall -o ./uratool ./source/main.c
 
 clean:
 	rm urtool
