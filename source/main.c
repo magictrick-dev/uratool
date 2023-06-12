@@ -3,7 +3,6 @@
 #include <core/helpers.h>
 #include <core/primitives.h>
 
-#if 1
 #include <libudev.h>
 
 // -----------------------------------------------------------------------------
@@ -41,45 +40,11 @@ uratool_close_udev_instance(uratool_udev_instance* instance)
 
 }
 
-// -----------------------------------------------------------------------------
-// Entry Point
-// -----------------------------------------------------------------------------
+void
+uratool_enumerate_devices(uratool_udev_instance* instance)
+{
 
-int main(int argc, char *argv[]) {
-#if 0
-    udev *uDev = udev_new();
-    udev_enumerate *enumerate;
-    udev_list_entry *devices, *deviceEntry;
-    udev_device *blockDevice;
-    const char *path;
-
-    enumerate = udev_enumerate_new(uDev);
-    udev_enumerate_add_match_subsystem(enumerate, "block");
-    udev_enumerate_scan_devices(enumerate);
-    devices = udev_enumerate_get_list_entry(enumerate);
-
-    udev_list_entry_foreach(deviceEntry, devices) {
-        path = udev_list_entry_get_name(deviceEntry);
-
-        if (path) {
-            blockDevice = udev_device_new_from_syspath(uDev, path);
-            printf("BLOCK DEVICE: %s\n", udev_device_get_sysname(blockDevice));
-            printf("    PARTUUID: %s\n", udev_device_get_property_value(blockDevice, "ID_PART_ENTRY_UUID"));
-            printf("     DEVNAME: %s\n\n", udev_device_get_property_value(blockDevice, "DEVNAME"));
-            udev_device_unref(blockDevice);
-        }
-
-    }
-
-    udev_enumerate_unref(enumerate);
-    udev_unref(uDev);
-#endif
-
-	uratool_udev_instance instance = uratool_create_udev_instance();	
-
-	// -------------------------------------------------------------------------
-	
-	udev_enumerate* enum_inst = udev_enumerate_new(instance.context);
+	udev_enumerate* enum_inst = udev_enumerate_new(instance->context);
 	
 	udev_enumerate_add_match_subsystem(enum_inst, "block");
 	udev_enumerate_add_match_property(enum_inst, "DEVTYPE", "partition");
@@ -94,7 +59,7 @@ int main(int argc, char *argv[]) {
 	
 		if (path)
 		{
-			udev_device* block_device = udev_device_new_from_syspath(instance.context, path);
+			udev_device* block_device = udev_device_new_from_syspath(instance->context, path);
 			udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(block_device, "usb", "usb_device");
 			
 			if (block_device && usb_device)
@@ -116,8 +81,23 @@ int main(int argc, char *argv[]) {
 
 	URATOOL_UDEV_UNREF(enum_inst, udev_enumerate_unref);
 
-	// -------------------------------------------------------------------------
-	
+}
+
+// -----------------------------------------------------------------------------
+// Entry Point
+// -----------------------------------------------------------------------------
+
+int main(int argc, char *argv[]) {
+
+
+	// Create a udev instance that we can use to enumerate devices.
+	uratool_udev_instance instance = uratool_create_udev_instance();	
+	uratool_enumerate_devices(&instance);
+
+	// Close the enumeration.
 	uratool_close_udev_instance(&instance);
 }
-#endif
+
+
+
+
