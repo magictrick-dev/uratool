@@ -4,6 +4,13 @@
 #include <core/primitives.h>
 
 #include <libudev.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+
 
 // -----------------------------------------------------------------------------
 // udev_instance
@@ -67,9 +74,9 @@ uratool_enumerate_devices(uratool_udev_instance* instance)
 				printf("---------------------------\n");
 				printf("DEVICE: %s\n", udev_device_get_sysname(block_device));
 				printf("DEVNAME: %s\n", udev_device_get_property_value(block_device, "DEVNAME"));
-				printf("PARTUUID: %s\n", udev_device_get_property_value(block_device, "ID_PART_ENTRY_UUID"));
 				printf("DEVTYPE: %s\n", udev_device_get_property_value(block_device, "DEVTYPE"));
 				printf("VENDOR: %s\n", udev_device_get_sysattr_value(usb_device, "idVendor"));
+				printf("SERIAL: %s\n", udev_device_get_property_value(block_device, "ID_SERIAL_SHORT"));
 				printf("\n");
 			}
 
@@ -92,7 +99,45 @@ int main(int argc, char *argv[]) {
 
 	// Create a udev instance that we can use to enumerate devices.
 	uratool_udev_instance instance = uratool_create_udev_instance();	
-	uratool_enumerate_devices(&instance);
+
+	//uratool_enumerate_devices(&instance);
+
+    struct udev_monitor* mon = udev_monitor_new_from_netlink(instance.context, "udev");
+
+    udev_monitor_filter_add_match_subsystem_devtype(mon, "block", "partition");
+    udev_monitor_enable_receiving(mon);
+
+    int fd = udev_monitor_get_fd(mon);
+	int udev_monitor_fd_flags = fcntl(fd, F_GETFL);
+	fcntl(fd, F_SETFL, udev_monitor_fd_flags & ~O_NONBLOCK);
+
+	while (1) {
+
+		// Get the event device.
+		struct udev_device* event_device = udev_monitor_receive_device(mon);
+		if (event_device == NULL)
+		{
+			sleep(1);
+			continue;
+		}
+
+		// Get the action type.
+		const char* action_message = udev_device_get_action(event_device);
+		printf("Event: %s\n", action_message);
+
+		// If it is an add, then we should inspect it.
+		if (!strcmp(action_message, "add"))
+		{
+			printf("    Type: %s\n", udev_device_get_devtype(event_device));
+			printf("    Device Name: %s\n", udev_device_get_property_value(event_device, "DEVNAME"));
+		}
+
+		// Clear up the udev device from memory.
+		udev_device_unref(event_device);
+
+		// Snooze, save on system resources on long-polling.
+		sleep(1);
+	}
 
 	// Close the enumeration.
 	uratool_close_udev_instance(&instance);
