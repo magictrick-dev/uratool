@@ -18,6 +18,4 @@ typedef double 		r64;
 typedef i32 		b32;
 typedef i64 		b64;
 
-typedef i32 		errno;
-
 #endif
