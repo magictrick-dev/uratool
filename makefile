@@ -1,6 +1,6 @@
 
-uratool: ./source/main.c
-	g++ -I./source -ludev -lblkid -o ./uratool ./source/main.c
+uratool: ./source/main.cpp
+	g++ -I./source -ludev -lblkid -o ./uratool ./source/main.cpp
 
 clean:
 	rm uratool

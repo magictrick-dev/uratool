@@ -1,12 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <core/helpers.h>
-#include <core/primitives.h>
-
 #include <libudev.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/mount.h>
+
+#include <fstream>
+#include <iostream>
+
+#include <core/helpers.h>
+#include <core/primitives.h>
+
+#include <vendor/jsoncpp/json.hpp>
+
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
@@ -94,8 +101,28 @@ uratool_enumerate_devices(uratool_udev_instance* instance)
 // Entry Point
 // -----------------------------------------------------------------------------
 
+using json = nlohmann::json;
+
 int main(int argc, char *argv[]) {
 
+	// Look at the existing parsing object.
+	if (argc >= 1)
+	{
+		// Determine the path.
+		std::cout << argv[1] << std::endl;
+
+		// Test the JSON facility.
+		std::ifstream test_json_file(argv[1]);
+		json data = json::parse(test_json_file);
+
+		std::cout << data.dump() << std::endl;
+
+	}
+
+	else
+	{
+		std::cout << "No JSON input." << std::endl;
+	}
 
 	// Create a udev instance that we can use to enumerate devices.
 	uratool_udev_instance instance = uratool_create_udev_instance();	
@@ -126,10 +153,18 @@ int main(int argc, char *argv[]) {
 		printf("Event: %s\n", action_message);
 
 		// If it is an add, then we should inspect it.
-		if (!strcmp(action_message, "add"))
+		if (!strcmp(action_message, "add") || !strcmp(action_message, "change") || !strcmp(action_message, "remove"))
 		{
+
+			// First, turn it into a USB device.
+			udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(event_device, "usb", "usb_device");
+
 			printf("    Type: %s\n", udev_device_get_devtype(event_device));
 			printf("    Device Name: %s\n", udev_device_get_property_value(event_device, "DEVNAME"));
+			printf("    Device UUID: %s\n", udev_device_get_property_value(event_device, "SYNTH_UUID"));
+			printf("    Vendor: %s\n", udev_device_get_property_value(usb_device, "ID_VENDOR"));
+			printf("    Short Serial: %s\n", udev_device_get_property_value(usb_device, "ID_USB_SERIAL_SHORT"));
+
 		}
 
 		// Clear up the udev device from memory.
