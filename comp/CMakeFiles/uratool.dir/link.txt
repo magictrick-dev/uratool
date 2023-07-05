@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/uratool.dir/source/main.cpp.o -o bin/uratool  -ludev -lblkid -lpthread 

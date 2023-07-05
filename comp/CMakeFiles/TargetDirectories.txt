@@ -1,3 +1,0 @@
-/home/chris/Development/AGC/uratool/comp/CMakeFiles/uratool.dir
-/home/chris/Development/AGC/uratool/comp/CMakeFiles/edit_cache.dir
-/home/chris/Development/AGC/uratool/comp/CMakeFiles/rebuild_cache.dir
