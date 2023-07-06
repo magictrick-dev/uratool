@@ -3,7 +3,7 @@
 # Ensure Configuration is Enabled
 if [ ! -d "./comp" ];
 then
-	cmake -B./comp
+	cmake -B./comp -DCMAKE_BUILD_TYPE=Debug
 fi
 
 # Build
