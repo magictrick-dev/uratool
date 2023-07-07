@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <core/primitives.h>
 #include <core/application.h>
+#include <core/threading.h>
 
 /**
 void
@@ -42,30 +43,6 @@ gui_thread(void* args)
 }
 */
 
-#include <vector>
-
-typedef void* (*thread_func)(void*);
-
-class Thread
-{
-	public:
-		Thread(thread_func func) : _main(func) {}
-
-		inline void launch()
-		{
-			pthread_create(&this->_handle, NULL, this->_main, (void*)this);
-		}
-
-		inline void join()
-		{
-			pthread_join(this->_handle, NULL);
-		}
-
-	private:
-		thread_func 	_main;
-		pthread_t 		_handle;
-};
-
 class TestThread : public Thread
 {
 
@@ -98,21 +75,6 @@ class TestThread : public Thread
 	
 };
 
-class ThreadingManager
-{
-	public:
-
-		template <class T>
-		inline T* create_thread()
-		{
-			T* instance = new T(T::Main);
-			this->_active_thread = instance;
-			return instance;
-		}
-	protected:
-		Thread* 	_active_thread;
-};
-
 int
 main(int argc, char** argv)
 {
@@ -120,10 +82,10 @@ main(int argc, char** argv)
 	ThreadingManager t_man;
 	TestThread* t_thread = t_man.create_thread<TestThread>();
 	t_thread->launch();
+	t_thread->join();
 
 	Application application;
 	if (!application.init()) return 1;
 	while (application.runtime());
-	t_thread->join();
     return application.shutdown();
 }

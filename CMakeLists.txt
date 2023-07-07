@@ -11,6 +11,7 @@ add_executable(${PROJECT_NAME}
 
 "./source/main.cpp"
 "./source/core/application.cpp"
+"./source/core/threading.cpp"
 
 )
 
