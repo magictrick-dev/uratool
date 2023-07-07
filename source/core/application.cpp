@@ -1,6 +1,43 @@
 #include <core/application.h>
+#include <core/threading.h>
 #include <string>
 #include <iostream>
+
+class GUIThread : public Thread
+{
+
+	public:
+		GUIThread();
+		~GUIThread();
+
+		THREAD_MAIN(GUIThread);
+		virtual void exit();
+};
+
+GUIThread::
+GUIThread()
+{
+	std::cout << "GUI Thread construct." << std::endl;
+}
+
+GUIThread::
+~GUIThread()
+{
+	std::cout << "GUI Thread destruct." << std::endl;
+}
+
+void GUIThread::
+main()
+{
+	std::cout << "GUI Thread main." << std::endl;
+}
+
+void GUIThread::
+exit()
+{
+
+}
+
 
 // -----------------------------------------------------------------------------
 // Mutex Scope Lock
@@ -72,6 +109,12 @@ Application::
 bool Application::
 init()
 {
+
+	ThreadingManager t_man;
+	GUIThread* gui_thread = t_man.create_thread<GUIThread>();
+	gui_thread->launch();
+	gui_thread->join();
+
 	std::cout << "Performing initialization routine..." << std::endl;
 	return true;
 }
