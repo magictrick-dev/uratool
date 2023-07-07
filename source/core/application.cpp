@@ -1,51 +1,91 @@
 #include <core/application.h>
+#include <string>
+#include <iostream>
+
+// -----------------------------------------------------------------------------
+// Mutex Scope Lock
+// -----------------------------------------------------------------------------
+// A mutex scope lock is a small facility that performs locking/unlocking of
+// provided mutex for the duration that the object is in scope.
+
+MutexScopeLock::
+MutexScopeLock(pthread_mutex_t* mutex)
+	: _mutex(mutex)
+{
+	pthread_mutex_lock(this->_mutex);
+}
+
+MutexScopeLock::
+~MutexScopeLock()
+{
+	pthread_mutex_unlock(this->_mutex);
+}
+
+// -----------------------------------------------------------------------------
+// Internal State Handler Definition
+// -----------------------------------------------------------------------------
+// The internal state handler is the interface which acts between the main
+// and GUI thread. Since the data is shared between two threads, the internal
+// state handler contains mutexs for safe handling of thread-specific data manip.
+//
+
+InternalStateHandler::
+InternalStateHandler()
+	: _full_lock(PTHREAD_MUTEX_INITIALIZER)
+{ }
+
+InternalStateHandler::
+~InternalStateHandler()
+{ }
+
+void InternalStateHandler::
+request_full_lock()
+{
+	pthread_mutex_lock(&this->_full_lock);
+}
+
+void InternalStateHandler::
+release_full_lock()
+{
+	pthread_mutex_unlock(&this->_full_lock);
+}
+
+pthread_mutex_t* InternalStateHandler::
+retrieve_full_lock()
+{
+	return &this->_full_lock;
+}
+
+// -----------------------------------------------------------------------------
+// Application Definition
+// -----------------------------------------------------------------------------
+// The application drives the internal application and its internal functionality.
 
 Application::
 Application()
-{
-
-	// Prepare the internal state structure.
-	this->_app_state.state_mutex = PTHREAD_MUTEX_INITIALIZER;
-	pthread_mutex_lock(&this->_app_state.state_mutex);
-
-	// Autostart the GUI front end.
-	this->_app_state.gui_runtime = true;
-
-	// Free the lock.
-	pthread_mutex_unlock(&this->_app_state.state_mutex);
-
-}
+{ }
 
 Application::
 ~Application()
+{ }
+
+bool Application::
+init()
 {
-	this->delete_gui_thread();
+	std::cout << "Performing initialization routine..." << std::endl;
+	return true;
 }
 
-void Application::
-set_gui_thread(gui_thread_handle gui_func)
+bool Application::
+runtime()
 {
-	this->_thread_func = gui_func;
+	std::cout << "Runtime, exit." << std::endl;
+	return false;
 }
 
-void Application::
-create_gui_thread()
+int Application::
+shutdown()
 {
-
-	if (this->_thread_func == NULL)
-		return;
-
-	//&thread1, NULL, print_message_function, (void*) message1
-	int thread_return_value = pthread_create(&this->_gui_thread, NULL,
-			this->_thread_func, (void*)&this->_app_state);
-
-}
-
-void Application::
-delete_gui_thread()
-{
-	pthread_mutex_lock(&this->_app_state.state_mutex);
-	this->_app_state.gui_runtime = false;
-	pthread_mutex_unlock(&this->_app_state.state_mutex);
-	pthread_join(this->_gui_thread, NULL);
+	std::cout << "Shutdown procedure." << std::endl;
+	return 0;
 }
