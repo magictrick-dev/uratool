@@ -43,47 +43,9 @@ gui_thread(void* args)
 }
 */
 
-class TestThread : public Thread
-{
-
-	public:
-		TestThread(thread_func func) : Thread(func)
-		{
-		}
-
-		static void* Main(void* args)
-		{
-			std::cout << "TestThread static Main()" << std::endl;
-			TestThread* self = (TestThread*)args;
-			self->main();
-			pthread_exit(NULL);
-		}
-
-		void main()
-		{
-
-			std::cout << "TestThread main()" << std::endl;
-			this->number_c = number_a + number_b;
-			std::cout << "The magic number is " << number_c << " " << std::endl;
-
-		}
-
-	private:
-		int number_a = 69;
-		int number_b = 420;
-		int number_c = 0;
-	
-};
-
 int
 main(int argc, char** argv)
 {
-
-	ThreadingManager t_man;
-	TestThread* t_thread = t_man.create_thread<TestThread>();
-	t_thread->launch();
-	t_thread->join();
-
 	Application application;
 	if (!application.init()) return 1;
 	while (application.runtime());
