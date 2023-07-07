@@ -2,25 +2,50 @@
 #define URATOOL_APPLICATION_H
 #include <pthread.h>
 
-struct IState
+#define CREATE_ISH_SCOPELOCK(ish_ptr) MutexScopeLock \
+	__ish_scope_lock(ish_ptr->retrieve_full_lock())
+
+class MutexScopeLock
+{
+	public:
+		 MutexScopeLock(pthread_mutex_t* mutex);
+		~MutexScopeLock();
+
+	private:
+		pthread_mutex_t* 	_mutex;
+};
+
+class InternalStateHandler
 {
 
-	pthread_mutex_t state_mutex;
+	public:
+		 InternalStateHandler();
+		~InternalStateHandler();
 
-	bool gui_runtime;
+		void request_full_lock();
+		void release_full_lock();
+
+		pthread_mutex_t* retrieve_full_lock();
+
+	private:
+		pthread_mutex_t 	_full_lock;
+		bool 				_gui_runtime;
 
 };
 
 class Application
 {
-
 	public:
 					Application();
-		virtual    ~Application()
+		virtual    ~Application();
+
+		bool 		init();
+		bool 		runtime();
+		int 		shutdown();
 
 	protected:
-		pthread_t 	_gui_thread;
-		IState 		_app_state;
+		InternalStateHandler _ish;
+
 };
 
 #endif
