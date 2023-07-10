@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(${PROJECT_NAME} 
 
 "./source/main.cpp"
-"./source/core/application.cpp"
+"./source/gui_thread.cpp"
 "./source/core/threading.cpp"
 
 )
@@ -19,4 +19,4 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PUBLIC ./source)
 
 # Include OpenGL libraries.
-target_link_libraries(${PROJECT_NAME} udev blkid pthread)
+target_link_libraries(${PROJECT_NAME} udev blkid ncurses pthread)

@@ -33,6 +33,7 @@ ThreadingManager::
 	{
 		Thread* current_thread = this->_active_threads.back();
 		current_thread->exit();
+		current_thread->join();
 		delete current_thread;
 		this->_active_threads.pop_back();
 	}
