@@ -1,8 +1,11 @@
 #include <iostream>
+
 #include <pthread.h>
+#include <ncurses.h>
+
 #include <core/primitives.h>
-#include <core/application.h>
 #include <core/threading.h>
+#include <gui_thread.h>
 
 /**
 void
@@ -46,8 +49,17 @@ gui_thread(void* args)
 int
 main(int argc, char** argv)
 {
-	Application application;
-	if (!application.init()) return 1;
-	while (application.runtime());
-    return application.shutdown();
+
+	ThreadingManager thread_manager;
+	GUIThread* gui_thread = thread_manager.create_thread<GUIThread>();
+	gui_thread->set_runtime_state(true);
+	gui_thread->launch();
+
+	while (gui_thread->get_runtime_state())
+	{
+
+	}
+
+	gui_thread->exit();
+
 }
