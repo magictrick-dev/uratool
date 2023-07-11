@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 #include <ncurses.h>
+#include <unistd.h>
 
 #include <core/primitives.h>
 #include <core/threading.h>
@@ -57,7 +58,10 @@ main(int argc, char** argv)
 
 	while (gui_thread->get_runtime_state())
 	{
-
+		// We are assuming that we're doing some independent operations here.
+		// In the future, these operations will be actively monitoring udev for
+		// USB storage devices.
+		usleep(16000);
 	}
 
 	gui_thread->exit();
