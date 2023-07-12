@@ -12,6 +12,57 @@
 #include <core/threading.h>
 #include <gui_thread.h>
 
+#if 0
+/**
+ * We will need to enumerate the devices on udev startup to get the currently
+ * active devices. We won't know what's in, what's out, without first doing this.
+ * Otherwise, we will need to force the user to unplug and replug to make it work.
+ */
+
+void
+uratool_enumerate_devices(uratool_udev_instance* instance)
+{
+
+	udev_enumerate* enum_inst = udev_enumerate_new(instance->context);
+	
+	udev_enumerate_add_match_subsystem(enum_inst, "block");
+	udev_enumerate_add_match_property(enum_inst, "DEVTYPE", "partition");
+	
+	udev_enumerate_scan_devices(enum_inst);
+	udev_list_entry* devices = udev_enumerate_get_list_entry(enum_inst);
+	
+	udev_list_entry* device_entry;
+	udev_list_entry_foreach(device_entry, devices)
+	{
+		const char* path = udev_list_entry_get_name(device_entry);
+	
+		if (path)
+		{
+			udev_device* block_device = udev_device_new_from_syspath(instance->context, path);
+			udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(block_device, "usb", "usb_device");
+			
+			if (block_device && usb_device)
+			{
+				printf("---------------------------\n");
+				printf("DEVICE: %s\n", udev_device_get_sysname(block_device));
+				printf("DEVNAME: %s\n", udev_device_get_property_value(block_device, "DEVNAME"));
+				printf("DEVTYPE: %s\n", udev_device_get_property_value(block_device, "DEVTYPE"));
+				printf("VENDOR: %s\n", udev_device_get_sysattr_value(usb_device, "idVendor"));
+				printf("SERIAL: %s\n", udev_device_get_property_value(block_device, "ID_SERIAL_SHORT"));
+				printf("\n");
+			}
+
+			URATOOL_UDEV_UNREF(block_device, udev_device_unref);
+		}
+
+	}
+
+
+	URATOOL_UDEV_UNREF(enum_inst, udev_enumerate_unref);
+
+}
+#endif
+
 /**
  * The UDEV thread works in tandem with the main thread--since UDEV itself is
  * blocking, regardless if no device is being actively monitored, then it will

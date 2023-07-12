@@ -1,7 +1,6 @@
 #include <gui_thread.h>
 #include <ncurses.h>
 #include <unistd.h>
-
 #include <sstream>
 
 GUIThread::
@@ -102,7 +101,7 @@ main()
 	this->roll_offset = 0;
 
 	this->print("Uratool Version 0.1-Aplha by Chris DeJong 2023");
-	this->print("    Uratool is a USB replication automation tool designed");
+	this->print("    Uratool, USB Replication Automation Tool, is designed");
 	this->print("    to make managing operations-critical USB flash drives");
 	this->print("    painless and easy.\n");
 	this->print("    Type \"help\" to display a list of commands.");

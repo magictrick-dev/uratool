@@ -3,6 +3,7 @@
 #include <core/threading.h>
 #include <string>
 #define ROLL_BUFFER_MAX 256
+
 class GUIThread : public Thread
 {
 
