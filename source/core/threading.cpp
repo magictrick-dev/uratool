@@ -8,6 +8,13 @@ Thread::
 ~Thread()
 { }
 
+pthread_t Thread::
+get_handle() const
+{
+	// Thread handles are just fancy numbers.
+	return _handle;
+}
+
 void Thread::
 launch()
 {
