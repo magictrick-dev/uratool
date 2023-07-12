@@ -23,6 +23,8 @@ class Thread
 		virtual void main() = 0;
 		virtual void exit() = 0;
 
+		pthread_t 		get_handle() const;
+
 	private:
 		thread_func 	_main;
 		pthread_t 		_handle;

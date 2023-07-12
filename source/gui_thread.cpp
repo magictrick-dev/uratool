@@ -33,6 +33,10 @@ set_runtime_state(bool state)
 void GUIThread::
 print(std::string message)
 {
+	
+	// To be thread safe, we need to ensure that gather a lock here.
+	pthread_mutex_lock(&this->_m_print);
+
 	// Messages may contain multiple lines, so split and insert.
 	size_t pos = message.find("\n");
 
@@ -51,6 +55,9 @@ print(std::string message)
 		}
 		this->_insert_output_line("");
 	}
+
+	// Release the lock.
+	pthread_mutex_unlock(&this->_m_print);
 }
 
 void GUIThread::
@@ -102,7 +109,7 @@ main()
 	this->print("    Type \"quit\" to exit.\n");
 
 	int ch = ERR;
-	while (get_runtime_state())
+	while (this->get_runtime_state())
 	{
 
 		// Update the current terminal size.
@@ -118,14 +125,6 @@ main()
 		printw(">> %s", this->command_buffer.c_str());
 		refresh();
 
-#if 0
-		// Test to see if the rolling buffer doesn't blow tf up.
-		static int counter = 0;
-		counter++;
-		std::stringstream counter_out;
-		counter_out << "Counter Value: " << counter;
-		this->print(counter_out.str());
-#endif 
 		// Character Input
 		if ((ch = getch()) != ERR)
 		{
@@ -143,7 +142,7 @@ main()
 					this->print("Available commands:");
 					this->print("    Type \"help\" to display a list of commands. You are here!");
 					this->print("    Type \"quit\" to exit.");
-					this->print("    Type \"clear\" to clear the message output.\n");
+					this->print("    Type \"clear\" to clear the message output.");
 				}
 				else if (this->command_buffer == "clear")
 				{
@@ -156,7 +155,7 @@ main()
 					error_out << "Unknown command: " << this->command_buffer;
 					this->print(error_out.str());
 					this->print("    Type \"help\" to display a complete list of commands.");
-					this->print("    Type \"quit\" to exit.\n");
+					this->print("    Type \"quit\" to exit.");
 				}
 
 				// Clear the command buffer.

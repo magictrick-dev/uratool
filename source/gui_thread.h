@@ -30,6 +30,7 @@ class GUIThread : public Thread
 		void 			_insert_output_line(std::string message);
 
 	protected:
+		pthread_mutex_t 	_m_print;
 		pthread_mutex_t 	_m_runtime;
 		bool 				_runtime_state;
 };
