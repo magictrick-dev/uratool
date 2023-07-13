@@ -1,6 +1,9 @@
 #include <gui_thread.h>
+#include <udev_thread.h>
+
 #include <ncurses.h>
 #include <unistd.h>
+
 #include <sstream>
 
 GUIThread::

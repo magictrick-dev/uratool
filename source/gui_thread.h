@@ -2,7 +2,10 @@
 #define GUI_THREAD_H
 #include <core/threading.h>
 #include <string>
+
 #define ROLL_BUFFER_MAX 256
+
+class UDEVThread;
 
 class GUIThread : public Thread
 {
@@ -28,11 +31,13 @@ class GUIThread : public Thread
 		std::string output_rolling_buffer[ROLL_BUFFER_MAX];
 		std::string command_buffer;
 
-		void 			_insert_output_line(std::string message);
+		void    _insert_output_line(std::string message);
 
+        UDEVThread*    udev_thread;
 	protected:
 		pthread_mutex_t 	_m_print;
 		pthread_mutex_t 	_m_runtime;
+    protected:
 		bool 				_runtime_state;
 };
 
