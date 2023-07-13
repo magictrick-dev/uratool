@@ -11,6 +11,7 @@ add_executable(${PROJECT_NAME}
 
 "./source/main.cpp"
 "./source/gui_thread.cpp"
+"./source/udev_thread.cpp"
 "./source/core/threading.cpp"
 
 )
