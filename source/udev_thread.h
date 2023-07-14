@@ -1,7 +1,10 @@
 #ifndef URATOOL_UDEV_THREAD_H
 #define URATOOL_UDEV_THREAD_H
 #include <core/threading.h>
+
 #include <libudev.h>
+
+#include <string>
 
 // Forward declare GUIThread.
 class GUIThread;
@@ -44,9 +47,10 @@ class UDEVThread : public Thread
 		virtual void    exit();
 
         void            set_udev_context(udev* context);
-        udev*           get_udev_context();
-
         void            set_gui_thread(GUIThread* gui_thread);
+
+        // May return false if the property wasn't found.
+        std::string     get_udev_property(udev_device* device, const char* name);
 
     protected:
 		udev*           _udev_context;

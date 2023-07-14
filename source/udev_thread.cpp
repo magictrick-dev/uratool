@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <sstream>
+
 #if 0
 /**
  * We will need to enumerate the devices on udev startup to get the currently
@@ -68,10 +70,13 @@ set_udev_context(udev* context)
     this->_udev_context = context;
 }
 
-udev* UDEVThread::
-get_udev_context()
+inline std::string UDEVThread::
+get_udev_property(udev_device* device, const char* prop_name)
 {
-    return this->_udev_context;
+    const char* result = udev_device_get_property_value(device, prop_name);
+    if (result != NULL)
+        return result;
+    return "";
 }
 
 void UDEVThread::
@@ -83,7 +88,7 @@ main()
 {
 
 	// -------------------------------------------------------------------------
-	// Initialize UDEV
+	// Initialize UDEV Monitor
 	// -------------------------------------------------------------------------
 
 	// Create the monitor.
@@ -99,6 +104,7 @@ main()
 	// -------------------------------------------------------------------------
 	// Main runtime
 	// -------------------------------------------------------------------------
+
 	while (this->_gui_thread->get_runtime_state())
 	{
 
@@ -114,10 +120,8 @@ main()
 		{
 			// Get the action type.
 			const char* action_message = udev_device_get_action(event_device);
-			std::string event_name;
-			event_name += "USB Action Caught: ";
-			event_name += action_message;
-			this->_gui_thread->print(event_name);
+            if (action_message == NULL)
+                continue;
 
 			// If it is an add, then we should inspect it.
 			if (!strcmp(action_message, "add") || !strcmp(action_message, "change") || !strcmp(action_message, "remove"))
@@ -126,27 +130,18 @@ main()
 				// First, turn it into a USB device.
 				udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(event_device, "usb", "usb_device");
 
-#if 0
-				printf("    Type: %s\n", udev_device_get_devtype(event_device));
-				printf("    Device Name: %s\n", udev_device_get_property_value(event_device, "DEVNAME"));
-				printf("    Device UUID: %s\n", udev_device_get_property_value(event_device, "SYNTH_UUID"));
-				printf("    Vendor: %s\n", udev_device_get_property_value(usb_device, "ID_VENDOR"));
-				printf("    Short Serial: %s\n", udev_device_get_property_value(usb_device, "ID_USB_SERIAL_SHORT"));
-#endif
+                // Get our relavent properties.
+                std::string device_type = this->get_udev_property(event_device, "ID_FS_UUID");
+                std::string device_path = this->get_udev_property(event_device, "DEVNAME");
+                std::string device_vendor = this->get_udev_property(usb_device, "ID_VENDOR");
+                std::string device_serial = this->get_udev_property(usb_device, "ID_USB_SERIAL_SHORT");
 
-				std::string device_name;
-				device_name += "    Type: ";
-				device_name += udev_device_get_devtype(event_device);
-				this->_gui_thread->print(device_name);
-
-
-                const char* device_uuid = udev_device_get_property_value(event_device, "ID_FS_UUID");
-                if (device_uuid != NULL)
-                {
-                    std::string uuid_out = "    UUID: ";
-                    uuid_out += device_uuid;
-                    this->_gui_thread->print(uuid_out);
-                }
+                // Display to the user it happened.
+                std::stringstream output_string;
+                output_string << "Event '" << action_message << "' caught for " << device_vendor
+                    << " [ UUID: " << device_type << " SERIAL: " << device_serial
+                    << " PATH: " << device_path << " ]";
+                this->_gui_thread->print(output_string.str());
 
 			}
 
@@ -154,7 +149,5 @@ main()
 			udev_device_unref(event_device);
 		}
 	}
-
-	printf("Fell out of main loop.\n");
 
 }
