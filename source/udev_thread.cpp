@@ -2,6 +2,8 @@
 #include <gui_thread.h>
 
 #include <cstring>
+#include <device.h>
+
 #include <unistd.h>
 #include <fcntl.h>
 
