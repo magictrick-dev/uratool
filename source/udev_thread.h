@@ -1,10 +1,12 @@
 #ifndef URATOOL_UDEV_THREAD_H
 #define URATOOL_UDEV_THREAD_H
 #include <core/threading.h>
+#include <device.h>
 
 #include <libudev.h>
 
 #include <string>
+#include <vector>
 
 // Forward declare GUIThread.
 class GUIThread;
@@ -28,13 +30,19 @@ class UDEVThread : public Thread
 
         void            set_udev_context(udev* context);
         void            set_gui_thread(GUIThread* gui_thread);
+        
+        void            device_update(std::string event_message, udev_device* event_device);
 
-        // May return false if the property wasn't found.
         std::string     get_udev_property(udev_device* device, const char* name);
+
+        StorageDevice*  find_device_by_uuid(std::string uuid);
 
     protected:
 		udev*           _udev_context;
 		GUIThread*      _gui_thread;
+        
+        pthread_mutex_t             _m_storage_devices;
+        std::vector<StorageDevice>  _storage_devices;
 };
 
 
