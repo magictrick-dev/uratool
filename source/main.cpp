@@ -27,22 +27,17 @@ main(int argc, char** argv)
 	// Initialize the UDEV thread.
 	// -------------------------------------------------------------------------
 
+    udev* udev_context = udev_new();
+
 	UDEVThread* udev_thread = thread_manager.create_thread<UDEVThread>();
 	udev_thread->set_gui_thread(gui_thread); // Pass the GUI thread to the UDEV thread.
-	udev_thread->set_udev_context(udev_new()); // Create a udev context for the thread.
+	udev_thread->set_udev_context(udev_context); // Set a udev context for the thread.
 	udev_thread->launch();
 
 	// -------------------------------------------------------------------------
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------
-	
-	while (gui_thread->get_runtime_state())
-	{
-		// Sleep, we don't actually need to do anything.
-		// We could perhaps give main the GUI thread responsibility and let
-		// UDEV hinge on runtime state of GUI thread.
-		usleep(32000); // 32ms
-	}
+	gui_thread->join();
 
 	// -------------------------------------------------------------------------
 	// If the GUI thread has closed, we can force-kill the UDEV thread.
@@ -51,6 +46,6 @@ main(int argc, char** argv)
 	// release these resources back to the OS as soon as the application closes.
 	// -------------------------------------------------------------------------
 	pthread_cancel(udev_thread->get_handle());
-	udev_unref(udev_thread->get_udev_context());
+	udev_unref(udev_context);
 
 }

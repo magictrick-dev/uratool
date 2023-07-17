@@ -1,30 +1,15 @@
 #ifndef URATOOL_UDEV_THREAD_H
 #define URATOOL_UDEV_THREAD_H
 #include <core/threading.h>
+#include <device.h>
+
 #include <libudev.h>
+
+#include <string>
+#include <vector>
 
 // Forward declare GUIThread.
 class GUIThread;
-
-#if 0
-/**
- * Storage devices represent the various USB devices that are currently available
- * on the system. Devices themselves are then designed to be mounted and interacted
- * with by the system. For now this is a filler class with zero functionality.
- */
-class StorageDevice
-{
-
-    public:
-        StorageDevice(std::string identifier);
-
-    protected:
-        std::string     _uuid;
-        std::string     _mount_point;
-        std::string     _device_name;
-
-};
-#endif
 
 /**
  * The UDEV thread works in tandem with the main thread--since UDEV itself is
@@ -44,13 +29,20 @@ class UDEVThread : public Thread
 		virtual void    exit();
 
         void            set_udev_context(udev* context);
-        udev*           get_udev_context();
-
         void            set_gui_thread(GUIThread* gui_thread);
+        
+        void            device_update(std::string event_message, udev_device* event_device);
+
+        std::string     get_udev_property(udev_device* device, const char* name);
+
+        StorageDevice*  find_device_by_uuid(std::string uuid);
 
     protected:
 		udev*           _udev_context;
 		GUIThread*      _gui_thread;
+        
+        pthread_mutex_t             _m_storage_devices;
+        std::vector<StorageDevice>  _storage_devices;
 };
 
 
