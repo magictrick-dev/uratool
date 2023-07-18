@@ -6,7 +6,6 @@
 #define ROLL_BUFFER_MAX 256
 
 class UDEVThread;
-
 class GUIThread : public Thread
 {
 
@@ -32,6 +31,8 @@ class GUIThread : public Thread
 		std::string command_buffer;
 
 		void    _insert_output_line(std::string message);
+
+        void    process_command(std::string command);
 
         UDEVThread*    udev_thread;
 	protected:

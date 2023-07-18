@@ -79,6 +79,10 @@ device_update(std::string event_message, udev_device* event_device)
             this->_storage_devices.emplace_back(StorageDevice(device_uuid,
                         device_path, device_vendor));
 
+            // Set the GUI thread onto the devices should they need to print out.
+            StorageDevice& current_device = this->_storage_devices.back();
+            current_device.set_gui_thread(this->_gui_thread);
+
             // Insert into event log.
             std::stringstream add_message;
             add_message << "Device " << device_vendor << " [ " << device_uuid
