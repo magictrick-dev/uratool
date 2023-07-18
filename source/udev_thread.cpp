@@ -199,14 +199,52 @@ device_update(std::string event_message, udev_device* event_device)
 
         pthread_mutex_unlock(&this->_m_storage_devices);
     }
-
-    // Clear up the udev device from memory.
-    udev_device_unref(event_device);
 }
 
 void UDEVThread::
 main()
 {
+
+	// -------------------------------------------------------------------------
+    // Enumerate existing devices
+	// -------------------------------------------------------------------------
+
+    // Create our enumeration struct.
+	udev_enumerate* enum_inst = udev_enumerate_new(this->_udev_context);
+	
+    // Only block types with property "partition" in this enum.
+	udev_enumerate_add_match_subsystem(enum_inst, "block");
+	udev_enumerate_add_match_property(enum_inst, "DEVTYPE", "partition");
+	
+    // Scan the devices.
+	udev_enumerate_scan_devices(enum_inst);
+	udev_list_entry* devices = udev_enumerate_get_list_entry(enum_inst);
+	
+    // Loop through the devices.
+	udev_list_entry* device_entry;
+	udev_list_entry_foreach(device_entry, devices)
+	{
+        // Get the path of the device.
+		const char* path = udev_list_entry_get_name(device_entry);
+
+        // If the path exists, then we can inspect.
+		if (path)
+		{
+            // Determine if it is a block and USB device.
+			udev_device* block_device = udev_device_new_from_syspath(this->_udev_context, path);
+			udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(block_device, "usb", "usb_device");
+			
+            // Must be a block and USB device.
+			if (block_device && usb_device)
+                this->device_update("add", block_device);
+
+            // Unref the device afterwards.
+            udev_device_unref(block_device);
+		}
+    }
+
+    // Unref the enumeration instance.
+    udev_enumerate_unref(enum_inst);
 
 	// -------------------------------------------------------------------------
 	// Initialize UDEV Monitor
@@ -223,6 +261,7 @@ main()
 	fcntl(fd, F_SETFL, udev_monitor_fd_flags & ~O_NONBLOCK);
 
 	// -------------------------------------------------------------------------
+    //
 	// Main runtime
 	// -------------------------------------------------------------------------
 
@@ -244,6 +283,7 @@ main()
             if (action_message == NULL)
                 continue;
             this->device_update(action_message, event_device);
+            udev_device_unref(event_device);
 		}
 	}
 
