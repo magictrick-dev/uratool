@@ -22,6 +22,8 @@ class GUIThread : public Thread
 		void 			print(std::string);
 		void 			show_output();
 
+        inline void     set_udev_thread(UDEVThread* thread) { this->udev_thread = thread; }
+
 	protected:
 		int term_width;
 		int term_height;

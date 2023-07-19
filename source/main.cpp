@@ -111,6 +111,8 @@ main(int argc, char** argv)
 	state->udev_thread->set_udev_context(state->udev_context); // Set a udev context for the thread.
 	state->udev_thread->launch();
 
+    state->gui_thread->set_udev_thread(state->udev_thread);
+
 	// -------------------------------------------------------------------------
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------

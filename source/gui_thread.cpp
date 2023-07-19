@@ -161,19 +161,21 @@ process_command(std::string command)
 
         // Loop through the devices and stream them into the oss.
         this->udev_thread->lock_storage_devices();
-        std::vector<StorageDevice>& device_list = this->udev_thread->get_device_list();
-
-        for (size_t i = 0; i < device_list.size(); ++i)
+        std::vector<StorageDevice>* device_list = this->udev_thread->get_device_list();
+        if (device_list != NULL)
         {
-            StorageDevice& current_device = device_list[i];
-            oss << "Device: " << current_device.get_dev_name() << " w/ UUID: "
-                << current_device.get_uuid() << " with dev-path: "
-                << current_device.get_dev_path() << std::endl;
+            this->print("Available devices:");
+            for (size_t i = 0; i < device_list->size(); ++i)
+            {
+                StorageDevice& current_device = device_list->at(i);
+                oss << "    " << i + 1 << " " << current_device.get_dev_name() << " w/ UUID: "
+                    << current_device.get_uuid() << " with dev-path: "
+                    << current_device.get_dev_path();
+                this->print(oss.str());
+                oss.str("");
+            }
         }
-
         this->udev_thread->unlock_storage_devices();
-
-        this->print(oss.str());
     }
 
     // -------------------------------------------------------------------------
