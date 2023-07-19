@@ -9,57 +9,6 @@
 
 #include <sstream>
 
-#if 0
-/**
- * We will need to enumerate the devices on udev startup to get the currently
- * active devices. We won't know what's in, what's out, without first doing this.
- * Otherwise, we will need to force the user to unplug and replug to make it work.
- */
-
-void
-uratool_enumerate_devices(uratool_udev_instance* instance)
-{
-
-	udev_enumerate* enum_inst = udev_enumerate_new(instance->context);
-	
-	udev_enumerate_add_match_subsystem(enum_inst, "block");
-	udev_enumerate_add_match_property(enum_inst, "DEVTYPE", "partition");
-	
-	udev_enumerate_scan_devices(enum_inst);
-	udev_list_entry* devices = udev_enumerate_get_list_entry(enum_inst);
-	
-	udev_list_entry* device_entry;
-	udev_list_entry_foreach(device_entry, devices)
-	{
-		const char* path = udev_list_entry_get_name(device_entry);
-	
-		if (path)
-		{
-			udev_device* block_device = udev_device_new_from_syspath(instance->context, path);
-			udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(block_device, "usb", "usb_device");
-			
-			if (block_device && usb_device)
-			{
-				printf("---------------------------\n");
-				printf("DEVICE: %s\n", udev_device_get_sysname(block_device));
-				printf("DEVNAME: %s\n", udev_device_get_property_value(block_device, "DEVNAME"));
-				printf("DEVTYPE: %s\n", udev_device_get_property_value(block_device, "DEVTYPE"));
-				printf("VENDOR: %s\n", udev_device_get_sysattr_value(usb_device, "idVendor"));
-				printf("SERIAL: %s\n", udev_device_get_property_value(block_device, "ID_SERIAL_SHORT"));
-				printf("\n");
-			}
-
-			URATOOL_UDEV_UNREF(block_device, udev_device_unref);
-		}
-
-	}
-
-
-	URATOOL_UDEV_UNREF(enum_inst, udev_enumerate_unref);
-
-}
-#endif
-
 void UDEVThread::
 set_gui_thread(GUIThread* gui_thread)
 {
@@ -130,6 +79,10 @@ device_update(std::string event_message, udev_device* event_device)
             this->_storage_devices.emplace_back(StorageDevice(device_uuid,
                         device_path, device_vendor));
 
+            // Set the GUI thread onto the devices should they need to print out.
+            StorageDevice& current_device = this->_storage_devices.back();
+            current_device.set_gui_thread(this->_gui_thread);
+
             // Insert into event log.
             std::stringstream add_message;
             add_message << "Device " << device_vendor << " [ " << device_uuid
@@ -199,9 +152,6 @@ device_update(std::string event_message, udev_device* event_device)
 
         pthread_mutex_unlock(&this->_m_storage_devices);
     }
-
-    // Clear up the udev device from memory.
-    udev_device_unref(event_device);
 }
 
 void UDEVThread::
@@ -209,7 +159,48 @@ main()
 {
 
 	// -------------------------------------------------------------------------
-	// Initialize UDEV Monitor
+    // Enumerate existing devices
+	// -------------------------------------------------------------------------
+
+    // Create our enumeration struct.
+	udev_enumerate* enum_inst = udev_enumerate_new(this->_udev_context);
+	
+    // Only block types with property "partition" in this enum.
+	udev_enumerate_add_match_subsystem(enum_inst, "block");
+	udev_enumerate_add_match_property(enum_inst, "DEVTYPE", "partition");
+	
+    // Scan the devices.
+	udev_enumerate_scan_devices(enum_inst);
+	udev_list_entry* devices = udev_enumerate_get_list_entry(enum_inst);
+	
+    // Loop through the devices.
+	udev_list_entry* device_entry;
+	udev_list_entry_foreach(device_entry, devices)
+	{
+        // Get the path of the device.
+		const char* path = udev_list_entry_get_name(device_entry);
+
+        // If the path exists, then we can inspect.
+		if (path)
+		{
+            // Determine if it is a block and USB device.
+			udev_device* block_device = udev_device_new_from_syspath(this->_udev_context, path);
+			udev_device* usb_device = udev_device_get_parent_with_subsystem_devtype(block_device, "usb", "usb_device");
+			
+            // Must be a block and USB device.
+			if (block_device && usb_device)
+                this->device_update("add", block_device);
+
+            // Unref the device afterwards.
+            udev_device_unref(block_device);
+		}
+    }
+
+    // Unref the enumeration instance.
+    udev_enumerate_unref(enum_inst);
+
+	// -------------------------------------------------------------------------
+	// Initialize UDEV monitor.
 	// -------------------------------------------------------------------------
 
 	// Create the monitor.
@@ -223,11 +214,30 @@ main()
 	fcntl(fd, F_SETFL, udev_monitor_fd_flags & ~O_NONBLOCK);
 
 	// -------------------------------------------------------------------------
-	// Main runtime
+	// Main runtime.
 	// -------------------------------------------------------------------------
+    // The UDEV monitor doesn't busy-spin when waiting on devices; it will block
+    // until a device is caught and is ready to be processed. Because of this,
+    // the UDEV thread doesn't close in the typical behavior we'd expect. We aren't
+    // relying on the GUI thread's runtime state flag to be true every cycle since
+    // the loop doesn't cycle very often.
+    //
+    // The UDEV thread is force-closed by the main thread when the GUI thread
+    // exits using pthread_cancel(). Normally, you wouldn't want to do this since
+    // resources may not be freed, however there are mechanisms in place to clean
+    // up should the thread be forced to close.
+    //
+    // Essentially, main will lock the loop in case an iteration is in process.
+    // Then it will run the exit() routine which cleans up dynamically allocated
+    // resources and then exit.
 
 	while (this->_gui_thread->get_runtime_state())
 	{
+
+        // TODO(Chris): We should use a mutex lock to check if the thread is about
+        // to close. The main thread will lock that mutex during this process,
+        // preventing the runtime from continuing. It will then free resources
+        // and then close.
 
 		// We will poll the devices from our monitor.
 		struct udev_device* event_device = udev_monitor_receive_device(monitor);
@@ -244,6 +254,7 @@ main()
             if (action_message == NULL)
                 continue;
             this->device_update(action_message, event_device);
+            udev_device_unref(event_device);
 		}
 	}
 

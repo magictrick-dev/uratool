@@ -36,6 +36,10 @@ class UDEVThread : public Thread
         std::string     get_udev_property(udev_device* device, const char* name);
 
         StorageDevice*  find_device_by_uuid(std::string uuid);
+        inline std::vector<StorageDevice>* get_device_list() { return &this->_storage_devices; }
+
+        inline void     lock_storage_devices() { pthread_mutex_lock(&this->_m_storage_devices); }
+        inline void     unlock_storage_devices() { pthread_mutex_unlock(&this->_m_storage_devices); }
 
     protected:
 		udev*           _udev_context;

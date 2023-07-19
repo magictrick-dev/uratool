@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <sstream>
+#include <vector>
 
 GUIThread::
 GUIThread()
@@ -92,6 +93,106 @@ show_output()
 }
 
 void GUIThread::
+process_command(std::string command)
+{
+
+    // Split the command by spaces.
+    std::vector<std::string> command_splits;
+    std::string delimiter = " ";
+
+    size_t pos = 0;
+    std::string token;
+    while ((pos = command.find(delimiter)) != std::string::npos) {
+        token = command.substr(0, pos);
+        command_splits.push_back(token);
+        command.erase(0, pos + delimiter.length());
+    }
+
+    command_splits.push_back(command);
+
+    // Set the primary command.
+    std::string primary_command = command_splits[0];
+
+    // -------------------------------------------------------------------------
+    // Quit Command
+    // -------------------------------------------------------------------------
+    if (primary_command == "quit")
+    {
+        this->set_runtime_state(false); // Exit.
+    }
+
+    // -------------------------------------------------------------------------
+    // Help Command
+    // -------------------------------------------------------------------------
+    else if (primary_command == "help")
+    {
+        this->print("Available commands:");
+        this->print("    Type \"help\" to display a list of commands. You are here!");
+        this->print("    Type \"quit\" to exit.");
+        this->print("    Type \"clear\" to clear the message output.");
+        this->print("    Type \"mount [uuid]\" to manually mount a USB drive.");
+        this->print("    Type \"ls\" to list available devices.");
+    }
+
+    // -------------------------------------------------------------------------
+    // Clear Command
+    // -------------------------------------------------------------------------
+    else if (primary_command == "clear")
+    {
+        this->roll_size = 0;
+        this->roll_offset = 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // Mount Command
+    // -------------------------------------------------------------------------
+    else if (primary_command == "mount")
+    {
+
+    }
+
+    // -------------------------------------------------------------------------
+    // List Command
+    // -------------------------------------------------------------------------
+    else if (primary_command == "ls")
+    {
+        // Create an OSS for displaying the output.
+        std::stringstream oss;
+
+        // Loop through the devices and stream them into the oss.
+        this->udev_thread->lock_storage_devices();
+        std::vector<StorageDevice>* device_list = this->udev_thread->get_device_list();
+        if (device_list != NULL)
+        {
+            this->print("Available devices:");
+            for (size_t i = 0; i < device_list->size(); ++i)
+            {
+                StorageDevice& current_device = device_list->at(i);
+                oss << "    " << i + 1 << " " << current_device.get_dev_name() << " w/ UUID: "
+                    << current_device.get_uuid() << " with dev-path: "
+                    << current_device.get_dev_path();
+                this->print(oss.str());
+                oss.str("");
+            }
+        }
+        this->udev_thread->unlock_storage_devices();
+    }
+
+    // -------------------------------------------------------------------------
+    // Uncaught & Default
+    // -------------------------------------------------------------------------
+    else
+    {
+        std::stringstream error_out;
+        error_out << "Unknown command: " << this->command_buffer;
+        this->print(error_out.str());
+        this->print("    Type \"help\" to display a complete list of commands.");
+        this->print("    Type \"quit\" to exit.");
+    }
+
+}
+
+void GUIThread::
 main()
 {
 	initscr();
@@ -103,7 +204,7 @@ main()
 	this->roll_size = 0;
 	this->roll_offset = 0;
 
-	this->print("Uratool Version 0.1-Aplha by Chris DeJong 2023");
+	this->print("Uratool Version 0.2-Aplha by Chris DeJong 2023");
 	this->print("    Uratool, USB Replication Automation Tool, is designed");
 	this->print("    to make managing operations-critical USB flash drives");
 	this->print("    painless and easy.\n");
@@ -135,30 +236,7 @@ main()
 			if (ch == KEY_ENTER || ch == '\n')
 			{
 
-				if (this->command_buffer == "quit")
-				{
-					this->set_runtime_state(false); // Exit.
-				}
-				else if (this->command_buffer == "help")
-				{
-					this->print("Available commands:");
-					this->print("    Type \"help\" to display a list of commands. You are here!");
-					this->print("    Type \"quit\" to exit.");
-					this->print("    Type \"clear\" to clear the message output.");
-				}
-				else if (this->command_buffer == "clear")
-				{
-					this->roll_size = 0;
-					this->roll_offset = 0;
-				}
-				else
-				{
-					std::stringstream error_out;
-					error_out << "Unknown command: " << this->command_buffer;
-					this->print(error_out.str());
-					this->print("    Type \"help\" to display a complete list of commands.");
-					this->print("    Type \"quit\" to exit.");
-				}
+                process_command(this->command_buffer);
 
 				// Clear the command buffer.
 				this->command_buffer.clear();
