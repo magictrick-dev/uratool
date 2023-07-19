@@ -148,7 +148,26 @@ process_command(std::string command)
     // -------------------------------------------------------------------------
     else if (primary_command == "mount")
     {
-
+        if (command_splits.size() >= 2)
+        {
+            this->udev_thread->lock_storage_devices();
+            StorageDevice* device = this->udev_thread->find_device_by_uuid(command_splits[1]);
+            if (device != NULL)
+            {
+                this->print("Device found.");
+            }
+            else
+            {
+                std::stringstream oss;
+                oss << "Unable to find device with UUID: " << command_splits[1];
+                this->print(oss.str());
+            }
+            this->udev_thread->unlock_storage_devices();
+        }
+        else
+        {
+            this->print("Invalid command format: mount [uuid]");
+        }
     }
 
     // -------------------------------------------------------------------------
