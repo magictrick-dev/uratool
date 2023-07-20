@@ -14,6 +14,7 @@ class StorageDevice
     public:
         StorageDevice();
         StorageDevice(std::string uuid, std::string dev_path, std::string device_name);
+        virtual ~StorageDevice();
 
         inline std::string      get_uuid() const     { return this->_uuid; }
         inline std::string      get_dev_path() const { return this->_dev_path; }
@@ -26,12 +27,14 @@ class StorageDevice
         inline void     set_gui_thread(GUIThread* gui)  { this->_gui_thread = gui; }
 
         void            mount_device();
-
+        void            unmount_device();
+        inline bool     is_mounted() const { return this->_is_mounted; }
     protected:
         std::string     _uuid;
         std::string     _dev_path;
         std::string     _dev_name;
         std::string     _mount_path;
+        bool            _is_mounted;
 
         GUIThread*      _gui_thread;
 

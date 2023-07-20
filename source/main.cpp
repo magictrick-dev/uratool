@@ -12,8 +12,11 @@
 // the drives from the backup routine.
 
 #include <iostream>
+#include <sstream>
+#include <vector>
 #include <string>
 #include <cstring>
+#include <ctime>
 
 #include <unistd.h>
 #include <signal.h>
@@ -23,6 +26,81 @@
 #include <core/threading.h>
 #include <gui_thread.h>
 #include <udev_thread.h>
+
+// -----------------------------------------------------------------------------
+// Timing Utilities
+// -----------------------------------------------------------------------------
+
+struct current_time
+{
+    int year;
+    int month;
+    int day;
+    int hour;
+    int minute;
+    int second;
+};
+
+inline void
+update_time(current_time* ct)
+{
+    time_t ttime = time(0);
+    tm *local_time = localtime(&ttime);
+
+    ct->year = 1900 + local_time->tm_year;
+    ct->month = 1 + local_time->tm_mon;
+    ct->day = local_time->tm_mday;
+    ct->hour = 1 + local_time->tm_hour;
+    ct->minute = 1 + local_time->tm_min;
+    ct->second = 1 + local_time->tm_sec;
+}
+
+// Granularity type determines the interval of which certain operations take place.
+// The higher the granularity, the larger the check is.
+//
+// Regular granularity operates in a fixed, immediate by-seconds format.
+//      No next-operation rounding occurs and will happen at fixed intervals.
+// Minute graularity determines what minute of the hour this takes place.
+// Hour granularity determines what hour of the this takes place.
+// Day granularity determines what day of the week this takes place.
+// Week grandularity determines what week of the month this takes place.
+// Month granularity determines what month of the year takes place.
+//
+// For example, a minute granularity of 28 dictates that at every hour, minute 28,
+// the operation is performed. It will then set the next interval to occur one hour
+// from that point, at minute 28.
+//
+// An hour granularity of 17 dictates that operations happen 5PM or (hour 17) every
+// 24 hours. An hour granularity of 17.5 is 5:30PM, etc.
+//
+// A day granularity determines what day of the week the operation takes place. A
+// day granularity of 3 determines that the operation takes place on Tuesday.
+//
+enum class GranularityType
+{
+    Regular,
+    Minute,
+    Hour,
+    Day,
+    Week,
+    Month,
+};
+
+class Scheduler;
+class Operation
+{
+    public:
+        virtual void execute();
+    private:      
+};
+
+class Scheduler
+{
+
+    public:
+        Scheduler();
+        inline void update_operations();
+};
 
 // -----------------------------------------------------------------------------
 // Application State Definition & Application Utilities
@@ -116,18 +194,31 @@ main(int argc, char** argv)
 	// -------------------------------------------------------------------------
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------
-    // TODO(Chris): Our scheduling will probably happen in the main thread. The
-    // GUI thread should only handle front-end interaction and the UDEV thread
-    // contains UDEV-related operations. Timing, however, isn't not something either
-    // of these threads are responsible for, and since the main thread is open to
-    // be used outside of being a spin-loop (for now, just joins the GUI thread),
-    // it makes sense to have it periodically check the time and perform given
-    // operations as they're made.
-	state->gui_thread->join();
 
-    while (0)
+    current_time last_time_interval = {};
+    update_time(&last_time_interval);
+
+    time_t current_time = time(NULL);
+    time_t next_interval = current_time + 60;
+
+    while (state->gui_thread->get_runtime_state())
     {
-        // TODO(Chris): Our timing implementation goes here.
+        time_t now = time(NULL);
+
+        update_time(&last_time_interval);
+        if (current_time >= next_interval)
+        {
+            std::stringstream oss;
+            oss << "Updated at: " << now << " | " << last_time_interval.hour << ":"
+                << last_time_interval.minute << ":"
+                << last_time_interval.second;
+            state->gui_thread->print(oss.str());
+            next_interval = now + 60;
+        }
+
+        update_time(&last_time_interval);
+        current_time = now; 
+        usleep(16000);
     }
 
 	// -------------------------------------------------------------------------
