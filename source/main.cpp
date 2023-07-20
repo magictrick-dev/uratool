@@ -12,17 +12,22 @@
 // the drives from the backup routine.
 
 #include <iostream>
+#include <sstream>
+#include <vector>
 #include <string>
 #include <cstring>
+#include <ctime>
 
 #include <unistd.h>
 #include <signal.h>
 #include <libudev.h>
+#include <libcron/Cron.h>
 
 #include <core/primitives.h>
 #include <core/threading.h>
 #include <gui_thread.h>
 #include <udev_thread.h>
+#include <state.h>
 
 // -----------------------------------------------------------------------------
 // Application State Definition & Application Utilities
@@ -116,18 +121,17 @@ main(int argc, char** argv)
 	// -------------------------------------------------------------------------
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------
-    // TODO(Chris): Our scheduling will probably happen in the main thread. The
-    // GUI thread should only handle front-end interaction and the UDEV thread
-    // contains UDEV-related operations. Timing, however, isn't not something either
-    // of these threads are responsible for, and since the main thread is open to
-    // be used outside of being a spin-loop (for now, just joins the GUI thread),
-    // it makes sense to have it periodically check the time and perform given
-    // operations as they're made.
-	state->gui_thread->join();
 
-    while (0)
+    libcron::Cron cron;
+
+    cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
+        state->gui_thread->print("Hello from libcron!");
+    });
+
+    while (state->gui_thread->get_runtime_state())
     {
-        // TODO(Chris): Our timing implementation goes here.
+        cron.tick();
+        usleep(16000);
     }
 
 	// -------------------------------------------------------------------------

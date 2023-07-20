@@ -131,6 +131,7 @@ process_command(std::string command)
         this->print("    Type \"quit\" to exit.");
         this->print("    Type \"clear\" to clear the message output.");
         this->print("    Type \"mount [uuid]\" to manually mount a USB drive.");
+        this->print("    Type \"unmount [uuid]\" to manually unmount a USB drive.");
         this->print("    Type \"ls\" to list available devices.");
     }
 
@@ -148,7 +149,53 @@ process_command(std::string command)
     // -------------------------------------------------------------------------
     else if (primary_command == "mount")
     {
+        if (command_splits.size() >= 2)
+        {
+            this->udev_thread->lock_storage_devices();
+            StorageDevice* device = this->udev_thread->find_device_by_uuid(command_splits[1]);
+            if (device != NULL)
+            {
+                device->mount_device();
+            }
+            else
+            {
+                std::stringstream oss;
+                oss << "Unable to find device with UUID: " << command_splits[1];
+                this->print(oss.str());
+            }
+            this->udev_thread->unlock_storage_devices();
+        }
+        else
+        {
+            this->print("Invalid command format: mount [uuid]");
+        }
+    }
 
+    // -------------------------------------------------------------------------
+    // Unmount Command
+    // -------------------------------------------------------------------------
+    else if (primary_command == "unmount")
+    {
+        if (command_splits.size() >= 2)
+        {
+            this->udev_thread->lock_storage_devices();
+            StorageDevice* device = this->udev_thread->find_device_by_uuid(command_splits[1]);
+            if (device != NULL)
+            {
+                device->unmount_device();
+            }
+            else
+            {
+                std::stringstream oss;
+                oss << "Unable to find device with UUID: " << command_splits[1];
+                this->print(oss.str());
+            }
+            this->udev_thread->unlock_storage_devices();
+        }
+        else
+        {
+            this->print("Invalid command format: mount [uuid]");
+        }
     }
 
     // -------------------------------------------------------------------------
