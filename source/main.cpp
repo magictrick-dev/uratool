@@ -122,15 +122,24 @@ main(int argc, char** argv)
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------
 
+#if 0
     libcron::Cron cron;
 
-    cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
-        state->gui_thread->print("Hello from libcron!");
+    static time_t now;
+    now = time(0);
+    bool added_schedule = cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
+        time_t last = time(0);
+        time_t diff = last - now;
+        now = last;
+        std::stringstream oss;
+        oss << "Hell from libcron!    ";
+        oss << "Time difference: " << diff;
+        state->gui_thread->print(oss.str());
     });
-
+#endif
     while (state->gui_thread->get_runtime_state())
     {
-        cron.tick();
+        //cron.tick();
         usleep(16000);
     }
 
