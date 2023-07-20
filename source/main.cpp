@@ -21,86 +21,13 @@
 #include <unistd.h>
 #include <signal.h>
 #include <libudev.h>
+#include <libcron/Cron.h>
 
 #include <core/primitives.h>
 #include <core/threading.h>
 #include <gui_thread.h>
 #include <udev_thread.h>
-
-// -----------------------------------------------------------------------------
-// Timing Utilities
-// -----------------------------------------------------------------------------
-
-struct current_time
-{
-    int year;
-    int month;
-    int day;
-    int hour;
-    int minute;
-    int second;
-};
-
-inline void
-update_time(current_time* ct)
-{
-    time_t ttime = time(0);
-    tm *local_time = localtime(&ttime);
-
-    ct->year = 1900 + local_time->tm_year;
-    ct->month = 1 + local_time->tm_mon;
-    ct->day = local_time->tm_mday;
-    ct->hour = 1 + local_time->tm_hour;
-    ct->minute = 1 + local_time->tm_min;
-    ct->second = 1 + local_time->tm_sec;
-}
-
-// Granularity type determines the interval of which certain operations take place.
-// The higher the granularity, the larger the check is.
-//
-// Regular granularity operates in a fixed, immediate by-seconds format.
-//      No next-operation rounding occurs and will happen at fixed intervals.
-// Minute graularity determines what minute of the hour this takes place.
-// Hour granularity determines what hour of the this takes place.
-// Day granularity determines what day of the week this takes place.
-// Week grandularity determines what week of the month this takes place.
-// Month granularity determines what month of the year takes place.
-//
-// For example, a minute granularity of 28 dictates that at every hour, minute 28,
-// the operation is performed. It will then set the next interval to occur one hour
-// from that point, at minute 28.
-//
-// An hour granularity of 17 dictates that operations happen 5PM or (hour 17) every
-// 24 hours. An hour granularity of 17.5 is 5:30PM, etc.
-//
-// A day granularity determines what day of the week the operation takes place. A
-// day granularity of 3 determines that the operation takes place on Tuesday.
-//
-enum class GranularityType
-{
-    Regular,
-    Minute,
-    Hour,
-    Day,
-    Week,
-    Month,
-};
-
-class Scheduler;
-class Operation
-{
-    public:
-        virtual void execute();
-    private:      
-};
-
-class Scheduler
-{
-
-    public:
-        Scheduler();
-        inline void update_operations();
-};
+#include <state.h>
 
 // -----------------------------------------------------------------------------
 // Application State Definition & Application Utilities
@@ -195,29 +122,15 @@ main(int argc, char** argv)
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------
 
-    current_time last_time_interval = {};
-    update_time(&last_time_interval);
+    libcron::Cron cron;
 
-    time_t current_time = time(NULL);
-    time_t next_interval = current_time + 60;
+    cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
+        state->gui_thread->print("Hello from libcron!");
+    });
 
     while (state->gui_thread->get_runtime_state())
     {
-        time_t now = time(NULL);
-
-        update_time(&last_time_interval);
-        if (current_time >= next_interval)
-        {
-            std::stringstream oss;
-            oss << "Updated at: " << now << " | " << last_time_interval.hour << ":"
-                << last_time_interval.minute << ":"
-                << last_time_interval.second;
-            state->gui_thread->print(oss.str());
-            next_interval = now + 60;
-        }
-
-        update_time(&last_time_interval);
-        current_time = now; 
+        cron.tick();
         usleep(16000);
     }
 
