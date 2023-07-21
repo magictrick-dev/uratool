@@ -1,0 +1,10 @@
+{
+    "profiles":
+    [
+        {
+            "name": "standard",
+            "backup_location": "~/Backups",
+            "drives": []
+        }
+    ]
+}

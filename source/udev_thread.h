@@ -28,9 +28,7 @@ class UDEVThread : public Thread
 		THREAD_MAIN(UDEVThread);
 		virtual void    exit();
 
-        void            set_udev_context(udev* context);
-        void            set_gui_thread(GUIThread* gui_thread);
-        
+        void            set_udev_context(udev* context);       
         void            device_update(std::string event_message, udev_device* event_device);
 
         std::string     get_udev_property(udev_device* device, const char* name);
@@ -43,7 +41,6 @@ class UDEVThread : public Thread
 
     protected:
 		udev*           _udev_context;
-		GUIThread*      _gui_thread;
         
         pthread_mutex_t             _m_storage_devices;
         std::vector<StorageDevice>  _storage_devices;

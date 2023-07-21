@@ -12,6 +12,7 @@
 // the drives from the backup routine.
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <vector>
 #include <string>
@@ -22,12 +23,37 @@
 #include <signal.h>
 #include <libudev.h>
 #include <libcron/Cron.h>
+#include <vendor/jsoncpp/json.hpp>
 
 #include <core/primitives.h>
-#include <core/threading.h>
-#include <gui_thread.h>
-#include <udev_thread.h>
 #include <state.h>
+
+// -----------------------------------------------------------------------------
+// Routine Configuration & Helpers
+// -----------------------------------------------------------------------------
+// The routine configuration determines what USBs get backed up to where, defining
+// a Cron timing schema that performs the routine at the given interval. The
+// routine configuration loads a JSON profile which saves to disk any configuration
+// created. These configurations may be modified or removed through the front-end.
+
+using json = nlohmann::json;
+
+class RoutineConfiguration
+{
+    public:
+        RoutineConfiguration(std::string profile_path);
+    
+    protected:
+        json        _profile;
+};
+
+RoutineConfiguration::
+RoutineConfiguration(std::string profile_path)
+{
+    
+    
+
+}
 
 // -----------------------------------------------------------------------------
 // Application State Definition & Application Utilities
@@ -38,22 +64,6 @@
 // it when a SIGINT event is caught.
 
 void exit_runtime(); // Forward dec.
-
-struct application_state
-{
-    ThreadingManager    thread_manager;
-    GUIThread*          gui_thread;
-    UDEVThread*         udev_thread;
-
-    udev*               udev_context;
-};
-
-inline static application_state*
-get_state()
-{
-    static application_state _instance = {};
-    return &_instance;
-}
 
 void
 signal_handler(int s)
@@ -69,7 +79,7 @@ exit_runtime()
 {
     application_state* state = get_state();
 	pthread_cancel(state->udev_thread->get_handle());
-	udev_unref(state->udev_context);
+	udev_unref((udev*)state->udev_context);
     exit(0);
 }
 
@@ -109,28 +119,35 @@ main(int argc, char** argv)
 	// Initialize the UDEV thread.
 	// -------------------------------------------------------------------------
 
-    state->udev_context = udev_new();
+    state->udev_context = (void*)udev_new();
 
 	state->udev_thread = state->thread_manager.create_thread<UDEVThread>();
-	state->udev_thread->set_gui_thread(state->gui_thread); // Pass the GUI thread to the UDEV thread.
-	state->udev_thread->set_udev_context(state->udev_context); // Set a udev context for the thread.
+	state->udev_thread->set_udev_context((udev*)state->udev_context); // Set a udev context for the thread.
 	state->udev_thread->launch();
-
-    state->gui_thread->set_udev_thread(state->udev_thread);
 
 	// -------------------------------------------------------------------------
 	// Continue running while the GUI is open.
 	// -------------------------------------------------------------------------
 
+#if 0
     libcron::Cron cron;
 
-    cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
-        state->gui_thread->print("Hello from libcron!");
+    static time_t now;
+    now = time(0);
+    bool added_schedule = cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
+        time_t last = time(0);
+        time_t diff = last - now;
+        now = last;
+        std::stringstream oss;
+        oss << "Hell from libcron!    ";
+        oss << "Time difference: " << diff;
+        state->gui_thread->print(oss.str());
     });
+#endif
 
     while (state->gui_thread->get_runtime_state())
     {
-        cron.tick();
+        //cron.tick();
         usleep(16000);
     }
 
