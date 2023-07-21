@@ -1,5 +1,6 @@
 #include <gui_thread.h>
 #include <udev_thread.h>
+#include <state.h>
 
 #include <ncurses.h>
 #include <unistd.h>
@@ -151,8 +152,8 @@ process_command(std::string command)
     {
         if (command_splits.size() >= 2)
         {
-            this->udev_thread->lock_storage_devices();
-            StorageDevice* device = this->udev_thread->find_device_by_uuid(command_splits[1]);
+            get_state()->udev_thread->lock_storage_devices();
+            StorageDevice* device = get_state()->udev_thread->find_device_by_uuid(command_splits[1]);
             if (device != NULL)
             {
                 device->mount_device();
@@ -163,7 +164,7 @@ process_command(std::string command)
                 oss << "Unable to find device with UUID: " << command_splits[1];
                 this->print(oss.str());
             }
-            this->udev_thread->unlock_storage_devices();
+            get_state()->udev_thread->unlock_storage_devices();
         }
         else
         {
@@ -178,8 +179,8 @@ process_command(std::string command)
     {
         if (command_splits.size() >= 2)
         {
-            this->udev_thread->lock_storage_devices();
-            StorageDevice* device = this->udev_thread->find_device_by_uuid(command_splits[1]);
+            get_state()->udev_thread->lock_storage_devices();
+            StorageDevice* device = get_state()->udev_thread->find_device_by_uuid(command_splits[1]);
             if (device != NULL)
             {
                 device->unmount_device();
@@ -190,7 +191,7 @@ process_command(std::string command)
                 oss << "Unable to find device with UUID: " << command_splits[1];
                 this->print(oss.str());
             }
-            this->udev_thread->unlock_storage_devices();
+            get_state()->udev_thread->unlock_storage_devices();
         }
         else
         {
@@ -207,8 +208,8 @@ process_command(std::string command)
         std::stringstream oss;
 
         // Loop through the devices and stream them into the oss.
-        this->udev_thread->lock_storage_devices();
-        std::vector<StorageDevice>* device_list = this->udev_thread->get_device_list();
+        get_state()->udev_thread->lock_storage_devices();
+        std::vector<StorageDevice>* device_list = get_state()->udev_thread->get_device_list();
         if (device_list != NULL)
         {
             this->print("Available devices:");
@@ -222,7 +223,7 @@ process_command(std::string command)
                 oss.str("");
             }
         }
-        this->udev_thread->unlock_storage_devices();
+        get_state()->udev_thread->unlock_storage_devices();
     }
 
     // -------------------------------------------------------------------------

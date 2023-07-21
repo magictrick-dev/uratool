@@ -1,5 +1,6 @@
 #include <udev_thread.h>
 #include <gui_thread.h>
+#include <state.h>
 
 #include <cstring>
 #include <device.h>
@@ -8,12 +9,6 @@
 #include <fcntl.h>
 
 #include <sstream>
-
-void UDEVThread::
-set_gui_thread(GUIThread* gui_thread)
-{
-    this->_gui_thread = gui_thread;
-}
 
 void UDEVThread::
 set_udev_context(udev* context)
@@ -81,17 +76,16 @@ device_update(std::string event_message, udev_device* event_device)
 
             // Set the GUI thread onto the devices should they need to print out.
             StorageDevice& current_device = this->_storage_devices.back();
-            current_device.set_gui_thread(this->_gui_thread);
 
             // Insert into event log.
             std::stringstream add_message;
             add_message << "Device " << device_vendor << " [ " << device_uuid
                 << " ] was added to the device list.";
-            this->_gui_thread->print(add_message.str());
+            get_state()->gui_thread->print(add_message.str());
         }
         else
         {
-            this->_gui_thread->print("Unable to add device... device exists already!");
+            get_state()->gui_thread->print("Unable to add device... device exists already!");
         }
         pthread_mutex_unlock(&this->_m_storage_devices);
     }
@@ -110,12 +104,12 @@ device_update(std::string event_message, udev_device* event_device)
             std::stringstream update_message;
             update_message << "Device " << device_vendor << " [ " << device_uuid
                 << " ] was updated in the device list.";
-            this->_gui_thread->print(update_message.str());
+            get_state()->gui_thread->print(update_message.str());
 
         }
         else
         {
-            this->_gui_thread->print("Unable to update device... device not found!");
+            get_state()->gui_thread->print("Unable to update device... device not found!");
         }
         pthread_mutex_unlock(&this->_m_storage_devices);
 
@@ -143,11 +137,11 @@ device_update(std::string event_message, udev_device* event_device)
             std::stringstream remove_message;
             remove_message << "Device " << device_vendor << " [ " << device_uuid
                 << " ] was remove from the device list.";
-            this->_gui_thread->print(remove_message.str());
+            get_state()->gui_thread->print(remove_message.str());
         }
         else
         {
-            this->_gui_thread->print("Unable to remove device... device not found!");
+            get_state()->gui_thread->print("Unable to remove device... device not found!");
         }
 
         pthread_mutex_unlock(&this->_m_storage_devices);
@@ -231,7 +225,7 @@ main()
     // Then it will run the exit() routine which cleans up dynamically allocated
     // resources and then exit.
 
-	while (this->_gui_thread->get_runtime_state())
+	while (get_state()->gui_thread->get_runtime_state())
 	{
 
         // TODO(Chris): We should use a mutex lock to check if the thread is about

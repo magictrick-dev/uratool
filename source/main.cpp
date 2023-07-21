@@ -24,9 +24,6 @@
 #include <libcron/Cron.h>
 
 #include <core/primitives.h>
-#include <core/threading.h>
-#include <gui_thread.h>
-#include <udev_thread.h>
 #include <state.h>
 
 // -----------------------------------------------------------------------------
@@ -38,22 +35,6 @@
 // it when a SIGINT event is caught.
 
 void exit_runtime(); // Forward dec.
-
-struct application_state
-{
-    ThreadingManager    thread_manager;
-    GUIThread*          gui_thread;
-    UDEVThread*         udev_thread;
-
-    udev*               udev_context;
-};
-
-inline static application_state*
-get_state()
-{
-    static application_state _instance = {};
-    return &_instance;
-}
 
 void
 signal_handler(int s)
@@ -69,7 +50,7 @@ exit_runtime()
 {
     application_state* state = get_state();
 	pthread_cancel(state->udev_thread->get_handle());
-	udev_unref(state->udev_context);
+	udev_unref((udev*)state->udev_context);
     exit(0);
 }
 
@@ -109,14 +90,11 @@ main(int argc, char** argv)
 	// Initialize the UDEV thread.
 	// -------------------------------------------------------------------------
 
-    state->udev_context = udev_new();
+    state->udev_context = (void*)udev_new();
 
 	state->udev_thread = state->thread_manager.create_thread<UDEVThread>();
-	state->udev_thread->set_gui_thread(state->gui_thread); // Pass the GUI thread to the UDEV thread.
-	state->udev_thread->set_udev_context(state->udev_context); // Set a udev context for the thread.
+	state->udev_thread->set_udev_context((udev*)state->udev_context); // Set a udev context for the thread.
 	state->udev_thread->launch();
-
-    state->gui_thread->set_udev_thread(state->udev_thread);
 
 	// -------------------------------------------------------------------------
 	// Continue running while the GUI is open.

@@ -13,8 +13,10 @@ add_executable(${PROJECT_NAME}
 "./source/gui_thread.cpp"
 "./source/device.cpp"
 "./source/udev_thread.cpp"
+
 "./source/core/threading.cpp"
 
+"./source/vendor/jsoncpp/json.hpp"
 )
 
 # External libraries.
@@ -25,7 +27,7 @@ add_subdirectory("source/vendor/libcron")
 target_include_directories(${PROJECT_NAME} PUBLIC ./source)
 
 # Include OpenGL libraries.
-target_link_libraries(${PROJECT_NAME} udev blkid ncurses pthread libcron date)
+target_link_libraries(${PROJECT_NAME} udev blkid ncurses pthread jsoncpp libcron date)
 
 get_target_property(LIBCRON_INC_PATH libcron INTERFACE_INCLUDE_DIRECTORIES)
 get_target_property(DATE_INC_PATH date INTERFACE_INCLUDE_DIRECTORIES)
