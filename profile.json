@@ -3,8 +3,8 @@
     [
         {
             "name": "standard",
-            "backup_location": "~/Backups"
-            "drives": [],
-        },
-    ],
+            "backup_location": "~/Backups",
+            "drives": []
+        }
+    ]
 }
