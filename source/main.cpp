@@ -41,7 +41,9 @@ using json = nlohmann::json;
 class RoutineConfiguration
 {
     public:
-        RoutineConfiguration(std::string profile_path);
+        RoutineConfiguration();
+
+        bool        load_profile(std::string file_path);
     
     protected:
         json        _profile;
@@ -49,9 +51,22 @@ class RoutineConfiguration
 
 RoutineConfiguration::
 RoutineConfiguration(std::string profile_path)
+{ }
+
+bool RoutineConfiguration::
+load_profile(std::string file_path)
 {
-    
-    
+
+    std::ifstream file(profile_path);   
+    if (file.is_open())
+    {
+        this->_profile = json::parse(file);   
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 
 }
 
