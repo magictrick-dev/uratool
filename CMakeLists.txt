@@ -13,6 +13,7 @@ add_executable(${PROJECT_NAME}
 "./source/gui_thread.cpp"
 "./source/device.cpp"
 "./source/udev_thread.cpp"
+"./source/resourceconfiguration.cpp"
 
 "./source/core/threading.cpp"
 
