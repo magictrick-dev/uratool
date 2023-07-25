@@ -4,14 +4,16 @@
 
 #include <gui_thread.h>
 #include <udev_thread.h>
+#include <resourceconfiguration.h>
 
 struct application_state
 {
-    ThreadingManager    thread_manager;
-    GUIThread*          gui_thread;
-    UDEVThread*         udev_thread;
+    ResourceConfiguration   res_config;
+    ThreadingManager        thread_manager;
+    GUIThread*              gui_thread;
+    UDEVThread*             udev_thread;
 
-    void*               udev_context;
+    void*       udev_context;
 };
 
 inline application_state*
