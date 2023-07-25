@@ -5,6 +5,16 @@
             "name": "standard",
             "backup_location": "~/Backups",
             "drives": []
+        },
+        {
+            "naem": "wrong",
+            "backup_location": "~/Backups2",
+            "drives": []
+        },
+        {
+            "name": "right",
+            "backup_location": "~/Backups3",
+            "drives": "not array"
         }
     ]
 }

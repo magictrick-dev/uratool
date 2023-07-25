@@ -12,6 +12,7 @@
 // the drives from the backup routine.
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -26,34 +27,8 @@
 #include <vendor/jsoncpp/json.hpp>
 
 #include <core/primitives.h>
+#include <resourceconfiguration.h>
 #include <state.h>
-
-// -----------------------------------------------------------------------------
-// Routine Configuration & Helpers
-// -----------------------------------------------------------------------------
-// The routine configuration determines what USBs get backed up to where, defining
-// a Cron timing schema that performs the routine at the given interval. The
-// routine configuration loads a JSON profile which saves to disk any configuration
-// created. These configurations may be modified or removed through the front-end.
-
-using json = nlohmann::json;
-
-class RoutineConfiguration
-{
-    public:
-        RoutineConfiguration(std::string profile_path);
-    
-    protected:
-        json        _profile;
-};
-
-RoutineConfiguration::
-RoutineConfiguration(std::string profile_path)
-{
-    
-    
-
-}
 
 // -----------------------------------------------------------------------------
 // Application State Definition & Application Utilities
@@ -144,6 +119,12 @@ main(int argc, char** argv)
         state->gui_thread->print(oss.str());
     });
 #endif
+
+    RoutineConfiguration configuration;
+    if (!configuration.load_profile("profile.json"))
+    {
+        std::cout << "Unable to load profile." << std::endl;
+    }
 
     while (state->gui_thread->get_runtime_state())
     {
