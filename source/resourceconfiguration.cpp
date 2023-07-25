@@ -35,26 +35,29 @@ parse_configurations()
                 continue;
             }
 
-            
+            // Search for any duplicates, name must unique.
+            bool duplicate = false;
+            for (Configuration& config : this->_configurations)
+            {
+                if (config.name == current_profile["name"])
+                {
+                    duplication = true;
+                    break;
+                }
+            }
+
+            if (duplicate == true)
+                continue; // No duplicates.
+
+            // Otherwise, create the configuration object and store it.
             Configuration current_config = {};
             current_config.name = current_profile["name"];
             current_config.backup_location = current_profile["backup_location"];
-            
             for (json drive : current_profile["drives"])
-            {
                 if (drive.is_primitive() && drive.is_string())
-                {
                     current_config.drives.push_back(drive);
-                }
-            }
-            
-            // Print the config.
-            std::cout << current_config.name << std::endl;
-            std::cout << current_config.backup_location << std::endl;
-            std::cout << "Drives:" << std::endl;
-            for (std::string a : current_config.drives)
-                std::cout << "    " << a << std::endl;
 
+            this->_configurations.push_back(current_config);
         }
 
     }
