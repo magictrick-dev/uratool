@@ -4,17 +4,12 @@
         {
             "name": "standard",
             "backup_location": "~/Backups",
-            "drives": []
+            "drives": ["AFBC-230A", "FC03-FF01"]
         },
         {
-            "naem": "wrong",
-            "backup_location": "~/Backups2",
-            "drives": []
-        },
-        {
-            "name": "right",
-            "backup_location": "~/Backups3",
-            "drives": "not array"
+            "name": "alternative",
+            "backup_location": "\\\\10.0.2.24\\",
+            "drives": ["a", "b", "c"]
         }
     ]
 }
