@@ -10,10 +10,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(${PROJECT_NAME} 
 
 "./source/main.cpp"
+"./source/application.cpp"
 "./source/gui_thread.cpp"
 "./source/device.cpp"
 "./source/udev_thread.cpp"
-"./source/resourceconfiguration.cpp"
+"./source/routines.cpp"
 
 "./source/core/threading.cpp"
 

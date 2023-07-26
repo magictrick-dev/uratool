@@ -1,6 +1,7 @@
 #ifndef URATOOL_RESOURCE_CONFIGURATION_H
 #define URATOOL_RESOURCE_CONFIGURATION_H
 #include <vendor/jsoncpp/json.hpp>
+#include <libcron/Cron.h>
 #include <vector>
 #include <string>
 
@@ -16,14 +17,14 @@ struct Configuration
 {
     std::string                 name;
     std::string                 backup_location;
+    std::string                 cron_time;
     std::vector<std::string>    drives;
-    
 };
 
-class RoutineConfiguration
+class Routines 
 {
     public:
-        RoutineConfiguration();
+        Routines();
 
         bool        load_profile(std::string file_path);
         void        save_profile(std::string file_path);
@@ -36,8 +37,8 @@ class RoutineConfiguration
         nlohmann::json              _profile;
         bool                        _loaded;
         std::string                 _file_path;
-
         std::vector<Configuration>  _configurations;
+        libcron::Cron<>              _cron_jobs;
 };
 
 #endif

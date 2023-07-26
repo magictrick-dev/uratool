@@ -1,15 +1,15 @@
-#include <resourceconfiguration.h>
+#include <routines.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 using json = nlohmann::json;
 
-RoutineConfiguration::
-RoutineConfiguration()
+Routines::
+Routines()
     : _loaded(false)
 { }
 
-void RoutineConfiguration::
+void Routines::
 parse_configurations()
 {
 
@@ -30,6 +30,7 @@ parse_configurations()
 
             if (!current_profile.contains("name")               || !current_profile["name"].is_string() ||
                 !current_profile.contains("backup_location")    || !current_profile["backup_location"].is_string() ||
+                !current_profile.contains("cron_schedule")      || !current_profile["cron_schedule"].is_string() ||
                 !current_profile.contains("drives")             || !current_profile["drives"].is_array())
             {
                 continue;
@@ -41,7 +42,7 @@ parse_configurations()
             {
                 if (config.name == current_profile["name"])
                 {
-                    duplication = true;
+                    duplicate = true;
                     break;
                 }
             }
@@ -70,7 +71,7 @@ parse_configurations()
 
 }
 
-bool RoutineConfiguration::
+bool Routines::
 load_profile(std::string file_path)
 {
 
@@ -96,7 +97,7 @@ load_profile(std::string file_path)
 
 }
 
-void RoutineConfiguration::
+void Routines::
 save_profile(std::string file_path)
 {
     
