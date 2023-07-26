@@ -27,8 +27,9 @@
 #include <vendor/jsoncpp/json.hpp>
 
 #include <core/primitives.h>
-#include <resourceconfiguration.h>
+#include <routines.h>
 #include <state.h>
+#include <application.h>
 
 // -----------------------------------------------------------------------------
 // Application State Definition & Application Utilities
@@ -38,24 +39,10 @@
 // fetched using a function fetcher/singleton instance such that we can access
 // it when a SIGINT event is caught.
 
-void exit_runtime(); // Forward dec.
-
 void
 signal_handler(int s)
 {
-    application_state* state = get_state();
-	state->gui_thread->set_runtime_state(false);
-    state->gui_thread->join();
-    exit_runtime();
-}
-
-void
-exit_runtime()
-{
-    application_state* state = get_state();
-	pthread_cancel(state->udev_thread->get_handle());
-	udev_unref((udev*)state->udev_context);
-    exit(0);
+    Application::exit_runtime();
 }
 
 // -----------------------------------------------------------------------------
@@ -67,9 +54,9 @@ main(int argc, char** argv)
 {
 
     // -------------------------------------------------------------------------
-    // Initialize the application state.
+    // Fetch our application. This will cause it to initialize.
     // -------------------------------------------------------------------------
-    application_state* state = get_state();
+    Application& application_instance = Application::get();
 
     // -------------------------------------------------------------------------
     // Capture terminal signals.
@@ -81,28 +68,6 @@ main(int argc, char** argv)
     sigIntHandler.sa_flags = 0;
 
     sigaction(SIGINT, &sigIntHandler, NULL);
-
-	// -------------------------------------------------------------------------
-	// Initialize the GUI thread.
-	// -------------------------------------------------------------------------
-
-	state->gui_thread = state->thread_manager.create_thread<GUIThread>();
-	state->gui_thread->set_runtime_state(true);
-	state->gui_thread->launch();
-
-	// -------------------------------------------------------------------------
-	// Initialize the UDEV thread.
-	// -------------------------------------------------------------------------
-
-    state->udev_context = (void*)udev_new();
-
-	state->udev_thread = state->thread_manager.create_thread<UDEVThread>();
-	state->udev_thread->set_udev_context((udev*)state->udev_context); // Set a udev context for the thread.
-	state->udev_thread->launch();
-
-	// -------------------------------------------------------------------------
-	// Continue running while the GUI is open.
-	// -------------------------------------------------------------------------
 
 #if 0
     libcron::Cron cron;
@@ -120,21 +85,16 @@ main(int argc, char** argv)
     });
 #endif
 
-    RoutineConfiguration configuration;
+    Routines configuration;
     if (!configuration.load_profile("profile.json"))
     {
         std::cout << "Unable to load profile." << std::endl;
     }
 
-    while (state->gui_thread->get_runtime_state())
+    while (Application::is_running())
     {
         //cron.tick();
         usleep(16000);
     }
-
-	// -------------------------------------------------------------------------
-    // Exit runtime.
-	// -------------------------------------------------------------------------
-    exit_runtime();
 
 }

@@ -4,11 +4,11 @@
 
 #include <gui_thread.h>
 #include <udev_thread.h>
-#include <resourceconfiguration.h>
+#include <routines.h>
 
 struct application_state
 {
-    ResourceConfiguration   res_config;
+    Routines                res_config;
     ThreadingManager        thread_manager;
     GUIThread*              gui_thread;
     UDEVThread*             udev_thread;
