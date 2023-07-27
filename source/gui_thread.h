@@ -5,7 +5,6 @@
 
 #define ROLL_BUFFER_MAX 256
 
-class UDEVThread;
 class GUIThread : public Thread
 {
 

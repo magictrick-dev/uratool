@@ -1,6 +1,9 @@
 #include <application.h>
 #include <libudev.h>
 
+#include <string>
+#include <sstream>
+
 /**
  * The constructor is marked protected to prevent the user from directly constructing
  * the application class. Since the application itself is a singleton, it is loaded
@@ -44,9 +47,104 @@ get()
     return _application_instance;
 }
 
-/**
- * The const char variant will cast to a string and then invoke the GUI print method. 
- */
+bool Application::
+mount(std::string uuid)
+{
+    SCOPE_APPLICATION(self);
+    bool return_status = false;
+
+    // Lock the current device list.
+    self.udev_thread->lock_storage_devices();
+
+    // Find the device first and then if it is found, mount it.
+    StorageDevice* device = self.udev_thread->find_device_by_uuid(uuid);
+    if (device != NULL)
+    {
+        device->mount_device();
+        return_status = true; 
+    }
+    else
+    {
+        std::stringstream oss;
+        oss << "Unable to find device with UUID: " << uuid;
+        self.print(oss.str());
+    }
+
+    // Unlock the current device list.
+    self.udev_thread->unlock_storage_devices();
+
+    // Return the status.
+    return return_status;
+}
+
+bool Application::
+unmount(std::string uuid)
+{
+    SCOPE_APPLICATION(self);
+    bool return_status = false;
+
+    // Lock the current device list.
+    self.udev_thread->lock_storage_devices();
+
+    // Find the device first and then if it is found, mount it.
+    StorageDevice* device = self.udev_thread->find_device_by_uuid(uuid);
+    if (device != NULL)
+    {
+        device->unmount_device();
+        return_status = true; 
+    }
+    else
+    {
+        std::stringstream oss;
+        oss << "Unable to find device with UUID: " << uuid;
+        self.print(oss.str());
+    }
+
+    // Unlock the current device list.
+    self.udev_thread->unlock_storage_devices();
+
+    // Return the status.
+    return return_status;
+}
+
+std::vector<std::string> Application::
+get_all_devices_info()
+{
+
+    SCOPE_APPLICATION(self);
+
+    // Retrieves the information of each device.
+    std::vector<std::string> device_info;
+
+    // Loop through the devices and stream them into the oss.
+    self.udev_thread->lock_storage_devices();
+    std::vector<StorageDevice>* device_list = self.udev_thread->get_device_list();
+    if (device_list != NULL)
+    {
+
+        // Create an OSS for displaying the output.
+        std::stringstream oss;
+   
+        // Loop through the devices.
+        for (size_t i = 0; i < device_list->size(); ++i)
+        {
+            // The method that we device to print may change, so this could be
+            // subject to change in the future.
+            StorageDevice& current_device = device_list->at(i);
+            oss << "    " << i + 1 << " " << current_device.get_dev_name() << " w/ UUID: "
+                << current_device.get_uuid() << " with dev-path: "
+                << current_device.get_dev_path();
+            device_info.push_back(oss.str());
+            oss.str("");
+        }
+    }
+
+    self.udev_thread->unlock_storage_devices();
+
+    // Return the list. An empty list may mean there are no devices to print.
+    return device_info;
+}
+
 Application& Application::
 print(const char* message)
 {
@@ -62,6 +160,13 @@ print(std::string message)
     return self;
 }
 
+bool Application::
+is_running()
+{
+    SCOPE_APPLICATION(self);
+    return self.gui_thread->get_runtime_state();
+}
+
 Application& Application::
 exit_runtime()
 {
@@ -75,7 +180,7 @@ exit_runtime()
 
     // The UDEV thread will need to be force closed since it is a blocking runtime.
     pthread_cancel(self.udev_thread->get_handle());
-    udev_unref(self.udev_context);
+    udev_unref((udev*)self.udev_context);
 
     return self;
 

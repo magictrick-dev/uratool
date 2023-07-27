@@ -1,6 +1,6 @@
 #include <gui_thread.h>
 #include <udev_thread.h>
-#include <state.h>
+#include <application.h>
 
 #include <ncurses.h>
 #include <unistd.h>
@@ -57,7 +57,7 @@ print(std::string message)
 			this->_insert_output_line(token);
 			message.erase(0, pos + 1);
 		}
-		this->_insert_output_line("");
+        this->_insert_output_line(message);
 	}
 
 	// Release the lock.
@@ -151,25 +151,9 @@ process_command(std::string command)
     else if (primary_command == "mount")
     {
         if (command_splits.size() >= 2)
-        {
-            get_state()->udev_thread->lock_storage_devices();
-            StorageDevice* device = get_state()->udev_thread->find_device_by_uuid(command_splits[1]);
-            if (device != NULL)
-            {
-                device->mount_device();
-            }
-            else
-            {
-                std::stringstream oss;
-                oss << "Unable to find device with UUID: " << command_splits[1];
-                this->print(oss.str());
-            }
-            get_state()->udev_thread->unlock_storage_devices();
-        }
+            Application::mount(command_splits[1]);
         else
-        {
             this->print("Invalid command format: mount [uuid]");
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -178,25 +162,9 @@ process_command(std::string command)
     else if (primary_command == "unmount")
     {
         if (command_splits.size() >= 2)
-        {
-            get_state()->udev_thread->lock_storage_devices();
-            StorageDevice* device = get_state()->udev_thread->find_device_by_uuid(command_splits[1]);
-            if (device != NULL)
-            {
-                device->unmount_device();
-            }
-            else
-            {
-                std::stringstream oss;
-                oss << "Unable to find device with UUID: " << command_splits[1];
-                this->print(oss.str());
-            }
-            get_state()->udev_thread->unlock_storage_devices();
-        }
+            Application::unmount(command_splits[1]);
         else
-        {
-            this->print("Invalid command format: mount [uuid]");
-        }
+            this->print("Invalid command format: unmount [uuid]");
     }
 
     // -------------------------------------------------------------------------
@@ -204,26 +172,24 @@ process_command(std::string command)
     // -------------------------------------------------------------------------
     else if (primary_command == "ls")
     {
-        // Create an OSS for displaying the output.
-        std::stringstream oss;
-
-        // Loop through the devices and stream them into the oss.
-        get_state()->udev_thread->lock_storage_devices();
-        std::vector<StorageDevice>* device_list = get_state()->udev_thread->get_device_list();
-        if (device_list != NULL)
+        std::vector<std::string> device_list = Application::get_all_devices_info();
+        if (device_list.size() > 0)
         {
-            this->print("Available devices:");
-            for (size_t i = 0; i < device_list->size(); ++i)
+            std::stringstream oss;
+            oss << "Currently Available Devices:" << std::endl;
+            for (size_t index = 0; index < device_list.size(); ++index)
             {
-                StorageDevice& current_device = device_list->at(i);
-                oss << "    " << i + 1 << " " << current_device.get_dev_name() << " w/ UUID: "
-                    << current_device.get_uuid() << " with dev-path: "
-                    << current_device.get_dev_path();
-                this->print(oss.str());
-                oss.str("");
+                oss << "    " << device_list[index];
+                if (index < device_list.size() - 1)
+                    oss << std::endl;
             }
+
+            this->print(oss.str());
         }
-        get_state()->udev_thread->unlock_storage_devices();
+        else
+        {
+            this->print("No devices to list.");
+        }
     }
 
     // -------------------------------------------------------------------------

@@ -97,4 +97,7 @@ main(int argc, char** argv)
         usleep(16000);
     }
 
+    // If we break out of the main loop, make sure to properly exit runtime.
+    Application::exit_runtime();
+
 }

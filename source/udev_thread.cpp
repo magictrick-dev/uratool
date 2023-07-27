@@ -1,6 +1,6 @@
 #include <udev_thread.h>
 #include <gui_thread.h>
-#include <state.h>
+#include <application.h>
 
 #include <cstring>
 #include <device.h>
@@ -81,11 +81,11 @@ device_update(std::string event_message, udev_device* event_device)
             std::stringstream add_message;
             add_message << "Device " << device_vendor << " [ " << device_uuid
                 << " ] was added to the device list.";
-            get_state()->gui_thread->print(add_message.str());
+            Application::print(add_message.str());
         }
         else
         {
-            get_state()->gui_thread->print("Unable to add device... device exists already!");
+            Application::print("Unable to add device... device exists already!");
         }
         pthread_mutex_unlock(&this->_m_storage_devices);
     }
@@ -104,12 +104,12 @@ device_update(std::string event_message, udev_device* event_device)
             std::stringstream update_message;
             update_message << "Device " << device_vendor << " [ " << device_uuid
                 << " ] was updated in the device list.";
-            get_state()->gui_thread->print(update_message.str());
+            Application::print(update_message.str());
 
         }
         else
         {
-            get_state()->gui_thread->print("Unable to update device... device not found!");
+            Application::print("Unable to update device... device not found!");
         }
         pthread_mutex_unlock(&this->_m_storage_devices);
 
@@ -137,11 +137,11 @@ device_update(std::string event_message, udev_device* event_device)
             std::stringstream remove_message;
             remove_message << "Device " << device_vendor << " [ " << device_uuid
                 << " ] was remove from the device list.";
-            get_state()->gui_thread->print(remove_message.str());
+            Application::print(remove_message.str());
         }
         else
         {
-            get_state()->gui_thread->print("Unable to remove device... device not found!");
+            Application::print("Unable to remove device... device not found!");
         }
 
         pthread_mutex_unlock(&this->_m_storage_devices);
@@ -225,7 +225,7 @@ main()
     // Then it will run the exit() routine which cleans up dynamically allocated
     // resources and then exit.
 
-	while (get_state()->gui_thread->get_runtime_state())
+	while (Application::is_running())
 	{
 
         // TODO(Chris): We should use a mutex lock to check if the thread is about
