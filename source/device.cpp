@@ -66,8 +66,15 @@ mount_device()
     // Determine if the path exists.
     if (!std::filesystem::exists(mount_path))
     {
-        if (!std::filesystem::create_directory(mount_path))
-            Application::print("Unable to create directory for volume.");
+        std::error_code e_code;
+        if (!std::filesystem::create_directory(mount_path, e_code))
+        {
+            std::stringstream oss;
+            oss << "Unable to create directory for volume at "
+                << mount_path << ", reason: " << std::endl;
+            oss << "    " << e_code.message();
+            Application::print(oss.str());
+        }
     }
 
     // Attempt to mount.
@@ -79,15 +86,20 @@ mount_device()
     {
         std::stringstream oss;
         oss << "Unable to mount " << this->_dev_path << " ( " << this->_uuid
-            << " ) to " << mount_path;
-        Application::print(oss.str());
+            << " ) to " << mount_path << ":" << std::endl;
 
         const char* error_string = strerror(errno);
         if (error_string != NULL)
         {
             std::string error_message = error_string;
-            Application::print(error_message);
+            oss << "    " << error_message;
         }
+        else
+        {
+            oss << "    Unable to get reason";
+        }
+
+        Application::print(oss.str());
 
     }
     else
