@@ -6,6 +6,7 @@
 #include <udev_thread.h>
 
 #include <string>
+#include <vector>
 
 // Short hand of scoping in the application struct.
 #define SCOPE_APPLICATION(name) Application& name = Application::get()
@@ -21,11 +22,15 @@
 class Application
 {
     public:
-        static      Application&   get();
-        static      Application&   print(const char*);
-        static      Application&   print(std::string);
-        static      Application&   exit_runtime();
-        static      bool           is_running() const;
+        static      Application&    get();
+        static      Application&    print(const char*);
+        static      Application&    print(std::string);
+        static      Application&    exit_runtime();
+
+        static      bool            is_running();
+        static      bool            mount(std::string);
+        static      bool            unmount(std::string);
+        static      std::vector<std::string>    get_all_devices_info();
 
         virtual    ~Application();
     protected:
@@ -33,7 +38,7 @@ class Application
 
     private:
         Routines            routine_handler;       
-        ThreadingManager    threading_manager;
+        ThreadingManager    thread_manager;
 
         GUIThread*          gui_thread;
         UDEVThread*         udev_thread;

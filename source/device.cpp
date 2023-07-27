@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <sstream>
 
+#include <application.h>
 #include <device.h>
 #include <string.h>
 #include <errno.h>
@@ -34,13 +35,13 @@ unmount_device()
             std::stringstream oss;
             oss << "Unable to unmount " << this->_dev_path << " ( " << this->_uuid
                 << " ) at " << this->_mount_path;
-            this->_gui_thread->print(oss.str());
+            Application::print(oss.str());
 
             const char* error_string = strerror(errno);
             if (error_string != NULL)
             {
                 std::string error_message = error_string;
-                this->_gui_thread->print(error_message);
+                Application::print(error_message);
             }
         }
         else
@@ -49,7 +50,7 @@ unmount_device()
             oss << "The device with UUID " << this->_uuid
                 << " was succesfully unmounted from "
                 << this->_mount_path;
-            this->_gui_thread->print(oss.str());
+            Application::print(oss.str());
             this->_is_mounted = false;
             this->_mount_path = "";
         }
@@ -66,7 +67,7 @@ mount_device()
     if (!std::filesystem::exists(mount_path))
     {
         if (!std::filesystem::create_directory(mount_path))
-            this->_gui_thread->print("Unable to create directory for volume.");
+            Application::print("Unable to create directory for volume.");
     }
 
     // Attempt to mount.
@@ -79,13 +80,13 @@ mount_device()
         std::stringstream oss;
         oss << "Unable to mount " << this->_dev_path << " ( " << this->_uuid
             << " ) to " << mount_path;
-        this->_gui_thread->print(oss.str());
+        Application::print(oss.str());
 
         const char* error_string = strerror(errno);
         if (error_string != NULL)
         {
             std::string error_message = error_string;
-            this->_gui_thread->print(error_message);
+            Application::print(error_message);
         }
 
     }
@@ -96,6 +97,6 @@ mount_device()
         std::stringstream oss;
         oss << "The device with UUID " << this->_uuid << " was succesfully mounted to "
             << this->_mount_path;
-        this->_gui_thread->print(oss.str());
+        Application::print(oss.str());
     }
 }

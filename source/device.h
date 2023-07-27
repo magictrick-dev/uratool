@@ -24,7 +24,6 @@ class StorageDevice
         inline void     set_uuid(std::string uuid)      { this->_uuid = uuid; }
         inline void     set_dev_path(std::string path)  { this->_dev_path = path; }
         inline void     set_dev_name(std::string name)  { this->_dev_name = name; }
-        inline void     set_gui_thread(GUIThread* gui)  { this->_gui_thread = gui; }
 
         void            mount_device();
         void            unmount_device();
@@ -35,9 +34,6 @@ class StorageDevice
         std::string     _dev_name;
         std::string     _mount_path;
         bool            _is_mounted;
-
-        GUIThread*      _gui_thread;
-
 };
 
 
