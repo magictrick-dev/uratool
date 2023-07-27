@@ -8,7 +8,9 @@ typedef void* (*thread_func)(void*);
 	{ ((thread_type*)arg)->main(); pthread_exit(NULL); } \
 	virtual void main()
 
-class ThreadingManager; // Forward dec.
+// Forward Decs.
+class ThreadingManager; 
+class Thread;
 
 class Thread
 {
@@ -39,12 +41,10 @@ class ThreadingManager
 		virtual ~ThreadingManager();
 
 		template <class T> inline T* create_thread();
-
 	protected:
 		std::vector<Thread*> 	_active_threads;
 		
 };
-
 
 template <class T> inline T* ThreadingManager::
 create_thread()

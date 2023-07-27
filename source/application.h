@@ -2,9 +2,6 @@
 #define URATOOL_APPLICATION_H
 #include <routines.h>
 #include <core/threading.h>
-#include <gui_thread.h>
-#include <udev_thread.h>
-
 #include <string>
 #include <vector>
 
@@ -26,6 +23,10 @@ class Application
         static      Application&    print(const char*);
         static      Application&    print(std::string);
         static      Application&    exit_runtime();
+        static      Application&    load_routines(std::string);
+
+        static      Application&    create_routine(Configuration&);
+        static      Application&    delete_routine(std::string);
 
         static      bool            is_running();
         static      bool            mount(std::string);
@@ -38,10 +39,10 @@ class Application
 
     private:
         Routines            routine_handler;       
-        ThreadingManager    thread_manager;
 
-        GUIThread*          gui_thread;
-        UDEVThread*         udev_thread;
+        ThreadingManager    thread_manager;
+        Thread*             gui_thread;
+        Thread*             udev_thread;
 
         void*               udev_context;
 };
