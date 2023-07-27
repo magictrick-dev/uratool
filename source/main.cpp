@@ -85,11 +85,6 @@ main(int argc, char** argv)
     });
 #endif
 
-    Routines configuration;
-    if (!configuration.load_profile("profile.json"))
-    {
-        std::cout << "Unable to load profile." << std::endl;
-    }
 
     while (Application::is_running())
     {
