@@ -27,11 +27,14 @@ class Application
 
         static      Application&    create_routine(Configuration&);
         static      Application&    delete_routine(std::string);
+        static      Application&    update_routine();
 
         static      bool            is_running();
         static      bool            mount(std::string);
         static      bool            unmount(std::string);
         static      std::vector<std::string>    get_all_devices_info();
+        static      std::vector<std::string>    get_all_routines_info();
+        static      Routines&                   get_routines();
 
         virtual    ~Application();
     protected:

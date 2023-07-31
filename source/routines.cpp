@@ -1,4 +1,5 @@
 #include <routines.h>
+#include <application.h>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -71,9 +72,70 @@ parse_configurations()
 
 }
 
+void Routines::
+update()
+{
+    this->_cron_jobs.tick();
+}
+
+Configuration* Routines::
+get_config_by_name(std::string config_name)
+{
+ 
+    // Search for the configuration.
+    for (size_t i = 0; i < this->_configurations.size(); ++i)
+        if (this->_configurations[i].name == config_name)
+            return &this->_configurations[i];
+
+    // If the search failed, then return a null ptr.
+    return NULL;
+
+}
+
+void Routines::
+process_backups(const libcron::TaskInformation& task_info)
+{
+    
+    // Cast back into child interface since the parent interface
+    // doesn't seem to recognize the get_name() method.
+    const libcron::Task& task = (const libcron::Task&)task_info;
+
+    // Get the name.
+    std::string task_name = task.get_name();
+
+    // Search for the configuration of the routine.
+    Routines& application_routines = Application::get_routines();
+    Configuration* config = application_routines.get_config_by_name(task_name);
+
+    if (config == NULL)
+        return;
+
+    // Perform the backup procedure.
+    backup_procedure(config);
+
+    return;
+}
+
+void Routines::
+backup_procedure(Configuration* config)
+{
+    
+    SCOPE_APPLICATION(application);
+
+    // Test procedure.
+    std::stringstream oss;
+    oss << "Backup procedure started for " << config->name
+        << " at: " << config->backup_location;
+
+    application.print(oss.str());
+
+}
+
 bool Routines::
 load_profile(std::string file_path)
 {
+
+    SCOPE_APPLICATION(application);
 
     std::ifstream file(file_path);   
     if (file.is_open())
@@ -88,6 +150,31 @@ load_profile(std::string file_path)
         // Parse the configuration, whether or not it is valid may be something
         // we should check for...
         this->parse_configurations();
+
+        // Once we have the configurations parsed, we should add their schedules
+        // into the system. We need to maintain a purge list of configurations
+        // that were not successfully added to the routines.
+        std::vector<std::string> purge_list;
+        for (size_t i = 0; i < this->_configurations.size(); ++i)
+        {
+            Configuration* current_config = &this->_configurations[i];
+
+            bool schedule_added = this->_cron_jobs.add_schedule(current_config->name,
+                    current_config->cron_time, process_backups);
+            if (!schedule_added)
+                purge_list.push_back(current_config->name);
+        }
+
+        // Remove the configurations that were not added to the routine.
+        for (size_t i = 0; i < purge_list.size(); ++i)
+        {
+            std::stringstream oss;
+            oss << "Invalid cron schedule for configuration: "
+                << purge_list[i];
+            application.print(oss.str());
+            // TODO(Chris): Implement the purge routine.
+        }
+
         return true;
     }
     else

@@ -69,26 +69,13 @@ main(int argc, char** argv)
 
     sigaction(SIGINT, &sigIntHandler, NULL);
 
-#if 0
-    libcron::Cron cron;
+    // Load our routines from disk.
+    Application::load_routines("profile.json");
 
-    static time_t now;
-    now = time(0);
-    bool added_schedule = cron.add_schedule("Hello from Cron", "*/3 * * * * ?", [=](auto&) {
-        time_t last = time(0);
-        time_t diff = last - now;
-        now = last;
-        std::stringstream oss;
-        oss << "Hell from libcron!    ";
-        oss << "Time difference: " << diff;
-        state->gui_thread->print(oss.str());
-    });
-#endif
-
-
+    // Run the main loop.
     while (Application::is_running())
     {
-        //cron.tick();
+        Application::update_routine(); // Tick the cron jobs.
         usleep(16000);
     }
 

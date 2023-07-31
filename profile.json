@@ -6,6 +6,12 @@
             "backup_location": "~/Backups",
             "cron_schedule": "0 0 * * 1-5",
             "drives": ["AFBC-230A", "FC03-FF01"]
+        },
+        {
+            "name": "test_schedule",
+            "backup_location": "~/Backups",
+            "cron_schedule": "* * * * * ?",
+            "drives": ["ABCD-1234", "EFGH-5678", "TEST-UUID"]
         }
     ]
 }

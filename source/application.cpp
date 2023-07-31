@@ -70,7 +70,7 @@ load_routines(std::string file_path)
 {
 
     SCOPE_APPLICATION(self);
-    if (self.routine_handler.load_profile(file_path))
+    if (!self.routine_handler.load_profile(file_path))
     {
         std::stringstream oss;
         oss << "Unable to load configuration file " << file_path << ":" << std::endl
@@ -80,6 +80,21 @@ load_routines(std::string file_path)
 
     return self;
 
+}
+
+Application& Application::
+update_routine()
+{
+    SCOPE_APPLICATION(self);
+    self.routine_handler.update();
+    return self;
+}
+
+Routines& Application::
+get_routines()
+{
+    SCOPE_APPLICATION(self);
+    return self.routine_handler;
 }
 
 Application& Application::
@@ -160,6 +175,15 @@ unmount(std::string uuid)
 
     // Return the status.
     return return_status;
+}
+
+std::vector<std::string> Application::
+get_all_routines_info()
+{
+    std::vector<std::string> routine_info;
+
+
+    return routine_info;
 }
 
 std::vector<std::string> Application::

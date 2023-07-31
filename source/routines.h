@@ -30,8 +30,15 @@ class Routines
         void        save_profile(std::string file_path);
         inline bool is_loaded() const { return this->_loaded; }
 
+        Configuration*      get_config_by_name(std::string config_name);
+
+        void        update();
+
     protected:
         void        parse_configurations();
+
+        static      void backup_procedure(Configuration*);
+        static      void process_backups(const libcron::TaskInformation&);
 
     protected:
         nlohmann::json              _profile;
